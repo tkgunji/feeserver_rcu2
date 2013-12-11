@@ -1,0 +1,33 @@
+ARCH=x86
+CXX=g++
+CC=gcc
+#EXTRAFLAGS="-O3 -Wall"
+EXTRAFLAGS="-ggdb3 -Wall "
+
+MIPSE=MIPSEL
+
+all:
+	mkdir -p bin/$(ARCH)
+	make -C dim            CXX=$(CXX) CC=$(CC) EXTRAFLAGS=$(EXTRAFLAGS) MIPSE=$(MIPSE)
+	cp dim/libdim.so dim/dns bin/$(ARCH)
+	make -C core           CXX=$(CXX) CC=$(CC) EXTRAFLAGS=$(EXTRAFLAGS)
+	cp core/feeserver bin/$(ARCH)
+	make -C controlengine  CXX=$(CXX) CC=$(CC) EXTRAFLAGS=$(EXTRAFLAGS)
+	cp controlengine/libCommandCoder*.so bin/$(ARCH)
+	make -C feeclient      CXX=$(CXX) CC=$(CC) EXTRAFLAGS=$(EXTRAFLAGS)
+	cp feeclient/libfeeclient.so feeclient/feeserver-ctrl bin/$(ARCH)
+#	doxygen doxygen
+
+clean:
+	make -C dim            clean
+	make -C core           clean
+	make -C controlengine  clean
+	make -C feeclient      clean
+	rm -rf bin/x86
+	rm -rf bin/arm
+	rm -rf html
+
+arm:
+#	make ARCH=arm CXX=arm-uclibc-g++ CC=arm-uclibc-gcc EXTRAFLAGS=$(EXTRAFLAGS) MIPSE=$(MIPSE)
+	make ARCH=arm CXX=arm-uclinuxeabi-g++ CC=arm-uclinuxeabi-gcc EXTRAFLAGS=$(EXTRAFLAGS) MIPSE=$(MIPSE)
+

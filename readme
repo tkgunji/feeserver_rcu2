@@ -1,0 +1,81 @@
+Preparing FeeServer (for TPC using RCU2, others subsititute appropriate library):
+
+svn co svn+ssh://USERNAME@svn.cern.ch/reps/TPCRCU2/trunk/SW/feeserver TPCRCU2_trunk #or 'svn co https://USERNAME@svn.cern.ch/reps/TPCRCU2/trunk/SW/feeserver'
+cd TPCRCU2/trunk/SW/feeserver
+make #'make arm' for DCS board
+cd bin/x86
+export DIM_DNS_NODE=localhost
+export FEE_SERVER_NAME=test
+export FEE_SERVER_HW=REAL #'DUMMY' for testing on PC
+export FEE_SERVER_LIBCE=./libCommandCoderTpc2.so #Substitute appropriate library for other devices
+export LD_LIBRARY_PATH=$(pwd)
+./dns&
+./feeserver
+
+Sending commands to FeeServer:
+cd TPCRCU2/trunk/SW/feeserver/bin/x86
+export LD_LIBRARY_PATH=$(pwd)
+export DIM_DNS_NODE=localhost
+echo "<action>GO_IDLE</action>" | ./feeserver-ctrl test
+
+One will now have a "basic" FeeServer for RCU2 with high/low level command execution, state machine and log handling very similar (identical) to what the current RCU/TPC uses. If things are done "right", the FeeServer for RCU2 will look very similar to the current, except with more FECs. The RCU-specific stuff has been cleared out since this will probably be very different. The FECs have been kept though, since we should be able to reuse this if we will still be able to directly access the FEC registers like we do today. Given that the new RCUs will have many more FECs than the old one, some modifications will be required since the FeeServer currently assumes there can only be 32 FECs. It should not be a problem to change this. We can come back to how to do this when more details of RCU2 are known. Except for changes releted to supporting more FECs, there should "in principle" be no need to modify files outside rcu2.cpp/.hpp and tpc2.cpp/.hpp. But probably something will show up...
+
+What has to be done:
+
+All RCU2 specific implemetations should be done in the files rcu2.hpp/.cpp. The functions below should be implemented to support RCU2 operation.
+
+DevMsgbufferRcu2 (hardware access):
+  DevMsgbufferRcu2();
+  virtual ~DevMsgbufferRcu2();
+  virtual int SingleWrite(uint32_t address, uint32_t data, uint32_t mode=1);
+  virtual int SingleRead(uint32_t address, uint32_t* pData, uint32_t mode=1);
+  virtual int MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize=4, uint32_t mode=1);
+  virtual int MultipleRead(uint32_t address, int iSize,uint32_t* pData, uint32_t mode=1);
+  virtual int DriverReload();
+  virtual int DriverUnload();
+  virtual int DriverLoad();
+
+DevFecaccessRcu2 (FEC access):
+  DevFecaccessRcu2(DevMsgbuffer* msgbuffer);
+  virtual int AccessFecReg(uint32_t &data, uint32_t fec, uint32_t reg, uint32_t rnw);
+
+DevRcu2 (command execution, anything else the FeeServer has to "do" for RCU2):
+  virtual int HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb);
+  virtual int issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDataSize, std::vector<uint32_t>& rb);
+  virtual int SetAfl(uint32_t value);
+  virtual int ArmorLocal();
+  virtual int ReSynchronizeLocal();
+
+CtrRcu2 are the "control" part specific to RCU2, while CtrRcu2Tpc are the "control" part specific to the TPC.
+
+Other files:
+
+Framework:
+dev.cpp/.hpp:               base class for "devices".
+ctr.cpp/.hpp:               base class for "control".
+issuehandler.cpp./.hpp:     base class for command handling.
+statemachine.cpp/.hpp:      base class for state machine.
+messagebuffer.cpp/.hpp:     base class for hardware access.
+ser.cpp./.hpp:              service publishing.
+dcb.cpp/.hpp:               DCS board-specific classes, in practice hardware access.
+fec.cpp./hpp:               access to FECs.
+rcu_issue.h:                defines all commands understood by the FeeServers.
+
+TPC-related:
+rcu.cpp/.hpp:               implementation for "old" RCU.
+tpc.cpp/.hpp:               implementation for TPC using "old" RCU.
+rcu2.cpp/.hpp:              implementation for RCU2.
+tpc2.hpp/.cpp:              implementation for TPC using RCU2.
+tpc_common.cpp/.hpp:        shared functionality (FECs) between RCU2 and "old" RCU.
+dcb:                        directory to hold drivers/header files for DCB hardware access.
+rcu2:                       directory to hold drivers/header files for RCU2 hardware access.
+
+Other devices:
+phos*.cpp/.hpp:             implementation for PHOS.
+busybox.cpp/.hpp:           implementation for BusyBox.
+calibrationpulser.cpp/.hpp: implementation for CalibrationPulser.
+gatepulser.cpp/.hpp:        implementation for GatePulser.
+laser.cpp/.hpp              implementation for Laser.
+triggeror.cpp/.hpp          implementation for TriggerOr.
+
+The first check-in of the FeeServer to this repository is identical to revsison 1804 from 'https://svn.ift.uib.no/svn/alice-dcs/trunk'. A web interface to the repository can be found at 'https://svnweb.cern.ch/cern/wsvn/TPCRCU2'.

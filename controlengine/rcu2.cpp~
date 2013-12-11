@@ -1,0 +1,243 @@
+#include <cerrno>
+#include <cstdlib>
+#include <typeinfo>
+#include "rcu2.hpp"
+#include "rcu_issue.h"
+#include "ser.hpp"
+#include "dcscMsgBufferInterface.h"
+
+/******************************************************************************/
+
+CtrRcu2::CtrRcu2():fpRcu2(NULL){
+  AddTransition(new CETransition(kActionGoStandby, kStateStandby, std::string(kActionGoStandby_name), NULL, NULL, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateIdle));
+  AddTransition(new CETransition(kActionGoIdle, kStateIdle, std::string(kActionGoIdle_name), CtrRcu2GO_IDLE, this, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateStandby));
+  AddTransition(new CETransition(kActionConf, kStateDownloading, std::string(kActionConf_name), NULL, NULL, 3, kStateStandby, kStateIdle, kStateRunning));
+  AddTransition(new CETransition(kActionConfigureDone, kStateRunning, std::string(kActionConfigureDone_name), NULL, NULL, 1, kStateDownloading));
+  AddTransition(new CETransition(kActionStart, kStateConfigured, std::string(kActionStart_name), NULL, NULL, 1, kStateRunning));
+  AddTransition(new CETransition(kActionStop, kStateRunning, std::string(kActionStop_name), NULL, NULL, 1, kStateConfigured));
+  AddTransition(new CETransition(kActionStartDaqConf, kStateConfDdl, std::string(kActionStartDaqConf_name), NULL, NULL, 4, kStateDownloading, kStateStandby, kStateIdle, kStateRunning));
+  AddTransition(new CETransition(kActionEndDaqConf, kStateRunning, std::string(kActionEndDaqConf_name), NULL, NULL, 1, kStateConfDdl));
+
+  if     (!fpMsgbuffer && fHwType==1) fpMsgbuffer=new DevMsgbufferRcu2();
+  else if(!fpMsgbuffer && fHwType==2) fpMsgbuffer=new DevMsgbufferDummy();
+  if(fpMsgbuffer) CE_Event("DevMsgbuffer of type '%s' created at %p with HwType %i\n", typeid(*fpMsgbuffer).name(), fpMsgbuffer, fHwType);
+  else CE_Warning("DevMsgbuffer not created at %p with HwType %i\n", fpMsgbuffer, fHwType);
+
+  if(!fpRcu2 && fpMsgbuffer) fpRcu2=new DevRcu2(subDevices.size(), this, fpMsgbuffer);
+  if(fpRcu2){
+    AddSubDevice(fpRcu2);
+    CE_Event("DevRcu2 '%s' (%i) of type '%s' created at %p with DevMsgbuffer at %p\n", fpRcu2->GetName().c_str(), fpRcu2->GetDeviceId(), typeid(*fpRcu2).name(), fpRcu2, fpMsgbuffer);
+  }
+  else CE_Warning("DevRcu2 not created at %p with DevMsgbuffer %p\n", fpRcu2, fpMsgbuffer);
+
+  if     (!fpFecaccess && fpMsgbuffer && fHwType==1) fpFecaccess=new DevFecaccessRcu2 (fpMsgbuffer);
+  else if(!fpFecaccess && fpMsgbuffer && fHwType==2) fpFecaccess=new DevFecaccessDummy(fpMsgbuffer);
+  if(fpFecaccess) CE_Event("DevFecaccess of type '%s' created at %p with DevMsgbuffer at %p and HwType %i\n", typeid(*fpFecaccess).name(), fpFecaccess, fpMsgbuffer, fHwType);
+  else CE_Warning("DevFecaccess not created at %p with DevMsgbuffer at %p and fHwType=%i\n", fpFecaccess, fpMsgbuffer, fHwType);
+}
+
+CtrRcu2::~CtrRcu2(){
+  fpMsgbuffer=NULL; // deleted in sub-device handling
+  fpRcu2=NULL;
+  fpFecaccess=NULL;
+  for(uint32_t i=0;i<32;i++){
+    fpFecs[i]=NULL;
+  }
+}
+
+int CtrRcu2::CtrRcu2GO_IDLE(CEStateMachine* callbackObject){
+  CE_Debug("CtrRcuGO_IDLE called\n");
+  if(!callbackObject){
+    CE_Error("No state machine\n");
+    return -1;
+  }
+  (dynamic_cast<CtrRcu2*>(callbackObject))->fpRcu2->SetAfl(0);
+  return 0;
+}
+
+/******************************************************************************/
+
+DevRcu2::DevRcu2(int id,  CEStateMachine* pParent, DevMsgbuffer* msgbuffer): Dev("RCU2", id, pParent),fpMsgbuffer(msgbuffer){
+  AddTransition(new CETransition(kActionGoStandby, kStateStandby, std::string(kActionGoStandby_name), NULL, NULL, 2, kStateError, kStateFailure));
+}
+
+int DevRcu2::GetGroupId(){
+  //Defining the command group of the RCU2.
+  return FEESVR_CMD_RCU2;
+}
+
+int DevRcu2::ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  //DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=0;
+  //  nRet = rcuSingleRead2(0x40000, &rawValue);
+  nRet = rcuSingleRead2(0x40040, &rawValue);
+  if(nRet>=0) pData->iVal=rawValue; 
+  else  pData->iVal=nRet;
+  return nRet;
+}
+
+int DevRcu2::ArmorLocal(){
+  //Will be executed at start of FeeServer
+  //Useful for initialisation code that do not fit into constructor
+  std::string name=GetName()+"_SLC_STATUS";
+  //fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS", 0x0, 1, 0, fpMsgbuffer));  
+  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::ReadStatusReg, 0, 0, 0, this);
+  return 0;
+}
+int DevRcu2::ReSynchronizeLocal(){
+  //Used to determine state of device, more complex tests can be implemented
+  return kStateStandby;
+}
+
+int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
+  //Handling of high-level commands (text strings)
+  //High-level commands are typically converted into coresponding low-level (binary) commands and passed to the issue function
+  if(!pCommand){
+    CE_Error("Hight level fee command buffer does not exist\n");
+    return -1;
+  }
+  uint32_t cmd=0;
+  size_t keySize=0;
+  std::string command=pCommand;
+  std::string test="";
+  if(command.find(test="EXAMPLE_COMMAND_1",0)==0){ keySize=test.size(); cmd=EXAMPLE_COMMAND_1; }
+  else if(command.find(test="EXAMPLE_COMMAND_2",0)==0){ keySize=test.size(); cmd=EXAMPLE_COMMAND_2; }
+  else if(command.find(test="RCU2_READ_STATUS",0)==0){ keySize=test.size(); cmd=RCU2_READ_STATUS; }
+  else if(command.find(test="RCU2_WRITE_WORDS",0)==0){ keySize=test.size(); cmd=RCU2_WRITE_WORDS; }
+  else return 0;
+  std::string parameter="";
+  if(keySize<command.size()){
+    if(command[keySize]!=' '){
+      CE_Debug("High level fee command '%s' not found in parameter group %i\n", command.c_str(), GetGroupId());
+      return -2;
+    }
+    parameter=command.substr(keySize+1,command.size());
+  }
+  if(int iResult=issue(cmd, atoi(parameter.c_str()), parameter.c_str(), parameter.size(), rb)<0){
+    CE_Warning("High level fee command '%s' issued binary command %p with parameter %p, failed with error %i\n", command.c_str(), cmd, atoi(parameter.c_str()), iResult);
+    return -3;
+  }
+  return 1;
+}
+
+int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDataSize, std::vector<uint32_t>& rb){
+  //Handling of low-level commands
+  //The cmd paramter is defined in rcu_issue.h
+  uint32_t data;
+  
+  switch(cmd){
+  case EXAMPLE_COMMAND_1:
+    //Return number of bytes of the command buffer (pData) consumed by the command
+    return 0;
+  case EXAMPLE_COMMAND_2:
+    return 0;
+  case RCU2_READ_STATUS:
+    CE_Event("DevRcu2::ArmorLocal() : STATUS\n");
+    rcuSingleRead2(0x40040, &data);
+    CE_Event("DevRcu2 read data =  0x%x\n", data);
+    return 0;
+  case RCU2_WRITE_WORDS:
+    CE_Event("DevRcu2::ArmorLocal() : STATUS\n");
+    data = 0x98765;
+    rcuSingleWrite2(0x40040, data);
+    CE_Event("DevRcu2 write data =  0x%x\n", data);
+    return 0;
+  }
+  CE_Warning("Unrecognized command %p\n", cmd);
+  return 0;
+}
+
+int DevRcu2::SetAfl(uint32_t value){
+  CE_Debug("Seting AFL to value %x\n", value);
+  int nRet=0;
+  uint32_t afl=0x0;
+  nRet=fpMsgbuffer->SingleRead(RCU2_FECActiveList, &afl);
+  if (nRet<0){
+    CE_Warning("can not read RCU AFL %#x: SingleRead failed (%d)\n", 0x8000, nRet);
+    return -1;
+  }
+  if(value==afl) return 0;
+  CEStateMachine* pParent=GetParentDevice();
+  if(!pParent) return -3;
+  int tmpState=kStateElse;
+  if(value>afl) tmpState=kStateRampUp;
+  else          tmpState=kStateRampDown;
+  int orgState=pParent->GetCurrentState();
+  pParent->ChangeState(tmpState);
+  for(uint32_t i=0;i<32;i++){
+    CE_Debug("n=%x, i=%x, value=%x, afl=%x\n", 0, i, value, afl);
+    if((value&(0x1<<i))^(afl&(0x1<<i))){
+      if((value&(0x1<<i))==0) afl=afl&~(0x1<<i);
+      else                    afl=afl| (0x1<<i);
+      CE_Debug("n=%x, i=%x, value=%x, afl=%x\n", 1, i, value, afl);
+      nRet=fpMsgbuffer->SingleWrite(0x8000, afl);
+      if (nRet<0){
+        CE_Error("SingleWrite failed to write %p to RCU AFL with error %i\n", 0x8000, nRet);
+        return -2;
+      }
+      else CE_Debug("Set AFL to %#x\n", afl);
+      usleep(300000);
+    }
+  }
+  pParent->ChangeState(orgState);
+  return 1;
+}
+
+
+
+/******************************************************************************/
+
+DevFecaccessRcu2::DevFecaccessRcu2(DevMsgbuffer* msgbuffer): DevFecaccess(msgbuffer){
+}
+int DevFecaccessRcu2::AccessFecReg(uint32_t &data, uint32_t fec, uint32_t reg, uint32_t rnw){
+  //To be implemented...
+  return -2160;
+}
+
+/******************************************************************************/
+
+DevMsgbufferRcu2::DevMsgbufferRcu2(){
+  DriverLoad();
+}
+DevMsgbufferRcu2::~DevMsgbufferRcu2(){
+  DriverUnload();
+}
+int DevMsgbufferRcu2::DriverReload(){
+  DriverUnload();
+  DriverLoad();
+  return 1;
+}
+int DevMsgbufferRcu2::DriverUnload(){
+  //return Rcu2DriverUnload();
+  return 1;
+}
+int DevMsgbufferRcu2::DriverLoad(){
+  //  return Rcu2DriverLoad();
+  if(initRcuAccess(NULL)<0){
+    CE_Error("initRcuAccess finished with error code\n");
+  }
+  return 1;
+}
+int DevMsgbufferRcu2::SingleWrite(uint32_t address, uint32_t data, uint32_t mode){
+ //return Rcu2Write(address, 1, data);
+ return 0;
+}
+int DevMsgbufferRcu2::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode){
+  //return Rcu2Read(address, 1, data);
+  return 0;
+}
+int DevMsgbufferRcu2::MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize, uint32_t mode){
+  //return Rcu2Write(address, iSize, data);
+  return 0;
+}
+int DevMsgbufferRcu2::MultipleRead(uint32_t address, int iSize, uint32_t* pData, uint32_t mode){
+  //return Rcu2Read(address, iSize, data);
+  return 0;
+}
+int DevMsgbufferRcu2::FlashErase(int startSec, int stopSec){ 
+  return stopSec-startSec; 
+}
+
+

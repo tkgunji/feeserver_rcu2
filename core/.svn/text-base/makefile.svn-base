@@ -1,0 +1,20 @@
+OBJECTS=feeserver.o main.o
+SOURCES=feeserver.cc main.cc
+EXECUTABLE=feeserver
+CXX=g++
+EXTRAFLAGS=
+CFLAGS=-c -fPIC -I../dim $(EXTRAFLAGS)
+LDFLAGS=-fPIC -L../dim -ldim -lpthread -ldl -rdynamic
+
+all: $(SOURCES) $(EXECUTABLE)
+
+clean:
+	rm -f *.o
+	rm -f $(EXECUTABLE)
+
+.cc.o:
+	$(CXX) $(CFLAGS) $< -o $@
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+
