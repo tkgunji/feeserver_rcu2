@@ -23,8 +23,6 @@ int CEStateMachine::Armor(){
   Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, CEStateMachine::updateDimDeviceState, 0, 0, Ser::eDataTypeFloat, this);
   name=GetName()+"_STATENAME";
   Ser::RegisterService(Ser::eDataTypeString, name.c_str(), 0.0, CEStateMachine::updateDimDeviceState, 0, 0, Ser::eDataTypeString, this);
-  name=GetName()+"_STATUS";
-  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.0, CEStateMachine::updateDimDeviceState, 0, 0, Ser::eDataTypeInt, this);
   std::vector<CEStateMachine*>::iterator it;
   for(it=subDevices.begin();it<subDevices.end();it++){
     CE_Event("Armoring device '%s' (%i)\n", (**it).GetName().c_str(), (**it).GetDeviceId());
@@ -78,6 +76,7 @@ int CEStateMachine::updateDimDeviceState(Ser::TceServiceData* pData, int major, 
       switch(minor){
       case Ser::eDataTypeFloat:
 	pData->fVal=(float)((CEStateMachine*)parameter)->GetCurrentState();
+	CE_Event("updateDimDeviceState %d \n", pData->fVal);
 	break;
       case Ser::eDataTypeInt:
 	pData->iVal=(int)((CEStateMachine*)parameter)->GetCurrentState();

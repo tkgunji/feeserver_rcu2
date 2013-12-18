@@ -73,8 +73,40 @@ int DevRcu2::ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unus
   //DevRcu2* rcu2=(DevRcu2*) parameter;
   int nRet=0;
   uint32_t rawValue=0;
-  //  nRet = rcuSingleRead2(0x40000, &rawValue);
-  nRet = rcuSingleRead2(0x40040, &rawValue);
+  nRet = rcuSingleRead2(0x40000, &rawValue);
+  if(nRet>=0) pData->iVal=rawValue; 
+  else  pData->iVal=nRet;
+  return nRet;
+}
+
+int DevRcu2::ReadL1LatencyReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  //DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=0;
+  nRet = rcuSingleRead2(0x40060, &rawValue);
+  if(nRet>=0) pData->iVal=rawValue; 
+  else  pData->iVal=nRet;
+  return nRet;
+}
+
+int DevRcu2::ReadL2LatencyReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  //DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=0;
+  nRet = rcuSingleRead2(0x40070, &rawValue);
+  if(nRet>=0) pData->iVal=rawValue; 
+  else  pData->iVal=nRet;
+  return nRet;
+}
+
+int DevRcu2::ReadVersionReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  //DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=0;
+  nRet = rcuSingleRead2(0x51060, &rawValue);
   if(nRet>=0) pData->iVal=rawValue; 
   else  pData->iVal=nRet;
   return nRet;
@@ -83,9 +115,24 @@ int DevRcu2::ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unus
 int DevRcu2::ArmorLocal(){
   //Will be executed at start of FeeServer
   //Useful for initialisation code that do not fit into constructor
-  std::string name=GetName()+"_SLC_STATUS";
+  //  std::string name=GetName()+"_SLC_STATUS";
   //fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS", 0x0, 1, 0, fpMsgbuffer));  
+
+  std::string basename = GetName();
+
+  std::string name=basename+"_CTRLREG";
   Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::ReadStatusReg, 0, 0, 0, this);
+
+  name=basename+"_L1_LATENCY_REG";
+  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::ReadL1LatencyReg, 0, 0, 0, this);
+
+  name=basename+"_L2_LATENCY_REG";
+  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::ReadL2LatencyReg, 0, 0, 0, this);
+
+  name=basename+"_VERSION";
+  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::ReadVersionReg, 0, 0, 0, this);
+
+
   return 0;
 }
 int DevRcu2::ReSynchronizeLocal(){
@@ -128,7 +175,9 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
   //Handling of low-level commands
   //The cmd paramter is defined in rcu_issue.h
   uint32_t data;
-  
+  const char* pBuffer = pData;
+  int address=0x0;
+
   switch(cmd){
   case EXAMPLE_COMMAND_1:
     //Return number of bytes of the command buffer (pData) consumed by the command
@@ -137,17 +186,22 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
     return 0;
   case RCU2_READ_STATUS:
     CE_Event("DevRcu2::ArmorLocal() : STATUS\n");
-    rcuSingleRead2(0x40040, &data);
-    CE_Event("DevRcu2 read data =  0x%x\n", data);
-    return 0;
+    ////////////////////////////////////////////////
+    //////// parameter.c_str() = pData = [addr] [data] /////
+    if(sscanf(pBuffer, "0x%x", &address)>0){
+      rcuSingleRead2(address, &data);
+      CE_Event("DevRcu2 read data =  0x%x (address = 0x%x)\n", data, address);
+      return 0;
+    }else{
+      CE_Event("DevRcu2 read data format is wrong!!\n");
+      return 0;
+    }
   case RCU2_WRITE_WORDS:
     CE_Event("DevRcu2::ArmorLocal() : STATUS\n");
     ////////////////////////////////////////////////
     //////// parameter.c_str() = pData = [addr] [data] /////
     int write_data = 0x0;
     int write_address = 0x0;
-
-    const char* pBuffer = pData;
     const char* pBlank=NULL;
     if(sscanf(pBuffer, "0x%x", &write_address)>0 && (pBlank=strchr(pBuffer, ' '))!=NULL && sscanf(pBlank, " 0x%x", &write_data)>0){
       rcuSingleWrite2(write_address, write_data);

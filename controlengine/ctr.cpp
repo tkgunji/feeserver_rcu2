@@ -19,7 +19,7 @@ int Ctr::enableLogging=false;
 int Ctr::enableServices=false;
 int Ctr::loglevel=eCEEvent;
 int Ctr::terminating=false;
-int Ctr::updateSleep=1;
+int Ctr::updateSleep=2;
 Ctr* Ctr::fpInstance=NULL;
 CE_Mutex Ctr::fMutex;
 std::vector<uint32_t> Ctr::configurations;

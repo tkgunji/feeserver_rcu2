@@ -242,7 +242,7 @@ int Ctr::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   size_t keySize=0;
   std::string command=pCommand;
   std::string test="";
-       if(command.find(test="CEDBG_EN_SERVICE_UPDATE",0)==0){ keySize=test.size(); cmd=CEDBG_EN_SERVICE_UPDATE; }
+  if(command.find(test="CEDBG_EN_SERVICE_UPDATE",0)==0){ keySize=test.size(); cmd=CEDBG_EN_SERVICE_UPDATE; }
   else if(command.find(test="CE_FORCE_CH_UPDATE"     ,0)==0){ keySize=test.size(); cmd=CE_FORCE_CH_UPDATE     ; }
   else if(command.find(test="CE_SET_LOGGING_LEVEL"   ,0)==0){ keySize=test.size(); cmd=CE_SET_LOGGING_LEVEL   ; }
   else if(command.find(test="CE_TERMINATE"           ,0)==0){ keySize=test.size(); cmd=CE_TERMINATE           ; }

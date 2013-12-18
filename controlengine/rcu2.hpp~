@@ -23,7 +23,7 @@ public:
   virtual int HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb);
   virtual int issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDataSize, std::vector<uint32_t>& rb);
   virtual int SetAfl(uint32_t value);
-  virtual int ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static int ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
 protected:
   virtual int ArmorLocal();
   virtual int ReSynchronizeLocal();

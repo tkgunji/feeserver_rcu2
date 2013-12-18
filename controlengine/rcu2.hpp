@@ -24,6 +24,9 @@ public:
   virtual int issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDataSize, std::vector<uint32_t>& rb);
   virtual int SetAfl(uint32_t value);
   static int ReadStatusReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static int ReadL1LatencyReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static int ReadL2LatencyReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static int ReadVersionReg(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
 protected:
   virtual int ArmorLocal();
   virtual int ReSynchronizeLocal();
