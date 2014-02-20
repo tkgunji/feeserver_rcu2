@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "ctr.hpp"
-#include "rcu_issue.h"
+#include "rcu2_issue.h"
 #include "issuehandler.hpp"
 
 Ctr::message_t Ctr::message;
@@ -19,7 +19,7 @@ int Ctr::enableLogging=false;
 int Ctr::enableServices=false;
 int Ctr::loglevel=eCEEvent;
 int Ctr::terminating=false;
-int Ctr::updateSleep=2;
+int Ctr::updateSleep=10;
 Ctr* Ctr::fpInstance=NULL;
 CE_Mutex Ctr::fMutex;
 std::vector<uint32_t> Ctr::configurations;

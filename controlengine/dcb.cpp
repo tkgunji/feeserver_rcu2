@@ -24,6 +24,7 @@ int DevMsgbufferDcb::SingleWrite(uint32_t address, uint32_t data, uint32_t mode)
   return -mode;
 }
 int DevMsgbufferDcb::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode){
+  CE_Debug("DevMsgbufferDcb::SingleRead, address = 0x%x\n",address); 
   switch(mode){
     case 3:
       if(!rcuBusControlCmd(eCheckFlash))rcuBusControlCmd(eEnableFlash);
@@ -34,6 +35,7 @@ int DevMsgbufferDcb::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode
     case 1:
       if(!rcuBusControlCmd(eCheckMsgBuf))rcuBusControlCmd(eEnableMsgBuf);
       return rcuSingleRead(address, pData);
+      //return rcuSingleRead2(address, pData);
   }
   return -mode;
 }

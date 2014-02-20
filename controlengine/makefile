@@ -12,7 +12,7 @@ OBJECTS_LASER=$(OBJECTS) laser.o dcb.o
 OBJECTS_TOR=$(OBJECTS) triggeror.o dcb.o
 SOURCES=ctr.cpp laser.cpp phos.cpp busybox.cpp gatepulser.cpp lockguard.cpp statemachine.cpp calibrationpulser.cpp rcu.cpp tpc.cpp dcscMsgBufferInterface.cpp dev.cpp fec.cpp laser.cpp selectmapInterface.cpp messagebuffer.cpp triggeror.cpp issuehandler.cpp ser.cpp dim_services.cpp tpc_common.cpp phos_common.cpp dcb.cpp
 #EXECUTABLE=libCommandCoderTpc.so libCommandCoderTpc2.so libCommandCoderPhs.so libCommandCoderPhs2.so libCommandCoderBb.so libCommandCoderCpulser.so libCommandCoderGpulser.so libCommandCoderLaser.so libCommandCoderTor.so
-EXECUTABLE=libCommandCoderTpc2.a
+EXECUTABLE=libCommandCoderTpc2.a libCommandCoderCpulser.a libCommandCoderGpulser.a libCommandCoderLaser.a
 CXX=arm-uclinuxeabi-g++
 EXTRAFLAGS=
 CFLAGS=-c -I../dim $(EXTRAFLAGS) -g -O2 -mcpu=cortex-m3 -mthumb -L/rcu2/release/linux-cortexm-1.11.0/A2F/root/usr/lib -pthread
@@ -52,11 +52,19 @@ libCommandCoderBb.so: $(OBJECTS_BB)
 libCommandCoderCpulser.so: $(OBJECTS_CPULSER)
 	$(CXX) $(LDFLAGS) $(OBJECTS_CPULSER) -o $@
 
+libCommandCoderCpulser.a: $(OBJECTS_CPULSER)
+	$(LD) libCommandCoderCpulser.a $(OBJECTS_CPULSER)
+
 libCommandCoderGpulser.so: $(OBJECTS_GPULSER)
 	$(CXX) $(LDFLAGS) $(OBJECTS_GPULSER) -o $@
 
+libCommandCoderGpulser.a: $(OBJECTS_GPULSER)
+	$(LD) libCommandCoderGpulser.a $(OBJECTS_GPULSER)
+
 libCommandCoderLaser.so: $(OBJECTS_LASER)
 	$(CXX) $(LDFLAGS) $(OBJECTS_LASER) -o $@
+libCommandCoderLaser.a: $(OBJECTS_LASER)
+	$(LD) libCommandCoderLaser.a $(OBJECTS_LASER)
 
 libCommandCoderTor.so: $(OBJECTS_TOR)
 	$(CXX) $(LDFLAGS) $(OBJECTS_TOR) -o $@

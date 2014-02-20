@@ -619,11 +619,13 @@ Bit 3: clear counters
 #define TTCIssueTestmode_WIDTH  1
 #define TTCIssueTestmode_SIZE   1
 
-#define TTCL1Latency     	0x4006
+//#define TTCL1Latency     	0x4006
+#define TTCL1Latency     	0x40060
 #define TTCL1Latency_WIDTH      16
 #define TTCL1Latency_SIZE       1
 
-#define TTCL2Latency	        0x4007
+//#define TTCL2Latency	        0x4007
+#define TTCL2Latency	        0x40070
 #define TTCL2Latency_WIDTH      32
 #define TTCL2Latency_SIZE       1
 

@@ -27,6 +27,7 @@ int DevFec::CtrRcuGO_ON(CEStateMachine* callbackObject){
   return 1;
 }
 int DevFec::ReSynchronizeLocal(){
+  //CE_Debug("DevFec::ReSynchronizeLocal\n");
   if (fpFecaccess==NULL) return kStateError;
   uint32_t status=0;
   int nRet=0;
@@ -65,6 +66,7 @@ int DevFec::EnterStateON(){
 }
 
 int DevFec::PreUpdateLocal(){
+  //CE_Debug("DevFec::PreUpdateLocal\n");
   uint32_t status=0;
   int nRet=0;
   status=0;
@@ -93,6 +95,7 @@ int DevFecaccess::WriteFecReg(uint32_t data, uint32_t fec, uint32_t reg){
 }
 
 int DevFecaccess::DetectFecs(uint32_t &detectedFecs){
+  CE_Debug("DevFecaccess::DetectFecs\n");
   int nRet=0;
   uint32_t orgAfl=0;
   nRet=GetAfl(orgAfl);
@@ -111,6 +114,7 @@ int DevFecaccess::DetectFecs(uint32_t &detectedFecs){
   return 0;
 }
 int DevFecaccess::GetFecAflStatus(uint32_t &status, uint32_t fec){
+
   int nRet=0;
   uint32_t afl=0;
   nRet=GetAfl(afl);
@@ -119,6 +123,8 @@ int DevFecaccess::GetFecAflStatus(uint32_t &status, uint32_t fec){
   return 0;
 }
 int DevFecaccess::SetFecAflStatus(uint32_t status, uint32_t fec){
+  CE_Debug("DevFecaccess::SetFecAflStatus\n");
+
   int nRet=0;
   uint32_t afl=0;
   nRet=GetAfl(afl);

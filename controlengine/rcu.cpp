@@ -71,6 +71,7 @@ int CtrRcu::CtrRcuGO_IDLE(CEStateMachine* callbackObject){
 
 std::string DevRcu::imemFileName;
 std::string DevRcu::regCfgFileName;
+
 DevRcu::DevRcu(int id,  CEStateMachine* pParent, DevMsgbuffer* msgbuffer): Dev("RCU", id, pParent),fpMsgbuffer(msgbuffer){
   AddTransition(new CETransition(kActionGoStandby, kStateStandby, std::string(kActionGoStandby_name), NULL, NULL, 2, kStateError, kStateFailure));
   imemFileName=Ctr::tmpDir+"/FEESERVER_IMEM";

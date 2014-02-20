@@ -1,4 +1,4 @@
-// $Id: dcscMsgBufferInterface.c,v 1.40 2010-01-11 07:53:50 dominik Exp $
+// $id: dcscMsgBufferInterface.c,v 1.40 2010-01-11 07:53:50 dominik Exp $
 
 /************************************************************************
 **
@@ -254,7 +254,6 @@ int g_count[4];
 int g_value[4];
 int g_oldval[4];
 #endif // DCSC_SIMULATION
-
 /******************************************************************************************************
  * code taken from altrogui/wrapper.c as a quick solution
  */
@@ -532,13 +531,13 @@ int openDevice(const char* pDeviceName)
 int closeDevice()
 {
   int iResult=0;
-    if (g_file>0) {
-      int file=g_file;
-      g_file=-1;
-      close(file);
+  if (g_file>0) {
+    int file=g_file;
+    g_file=-1;
+    close(file);
   } else
     iResult=-ENXIO;
-
+  
   //Deleting pBuffer
   mibSize=0;
   mrbSize=0;
@@ -882,8 +881,9 @@ int readDcscRegister(int regAddress, int bAlert)
 	iResult=data;
       }
     } 
-  if (g_options&PRINT_REGISTER_ACCESS && iResult>=0)
+  if (g_options&PRINT_REGISTER_ACCESS && iResult>=0){
     fprintf(stderr, "read register address %d: %#x\n",regAddress, iResult); 
+  }
   return iResult;
 }
 
@@ -1534,13 +1534,29 @@ int rcuSingleWrite(uint32_t address, uint32_t data){
   int iResult=rcuSingleWriteExt(address, data, MSGBUF_MODE_MEMMAPPED);
   return iResult;
 }
-int rcuSingleWrite2(uint32_t address, uint32_t pData)
+int Rcu2SingleWrite(uint32_t address, int size, uint32_t pData)
 {
   int iResult=0;
   int iTargetBufferSize=4;
-  if (seek_dcsc(address, 0)>=0){
-    if((iResult=write_dcsc((char*)pData, 1, iTargetBufferSize))!=iTargetBufferSize){
-      iResult=-EIO;
+  if(size==1){
+    if (seek_dcsc(address, 0)>=0){
+      if((iResult=write_dcsc((char*)pData, 1, iTargetBufferSize))!=iTargetBufferSize){
+	iResult=-EIO;
+      }
+    }
+  }
+  return iResult;
+}
+
+int Rcu2MultipleWrite(uint32_t address, int size, uint32_t *pData)
+{
+  int iResult=0;
+  int iTargetBufferSize=4;
+  if(size==1){
+    if (seek_dcsc(address, 0)>=0){
+      if((iResult=write_dcsc((char*)pData, 1, iTargetBufferSize))!=iTargetBufferSize){
+	iResult=-EIO;
+      }
     }
   }
   return iResult;
@@ -1564,13 +1580,29 @@ int rcuSingleRead(uint32_t address, uint32_t* pData)
   return iResult;
 }
 
-int rcuSingleRead2(uint32_t address, uint32_t* pData)
+int Rcu2SingleRead(uint32_t address, int size, uint32_t* pData)
 {
   int iResult=0;
   int iTargetBufferSize=4;
-  if (seek_dcsc(address, 0)>=0){
-    if((iResult=read_dcsc(pData, 1, iTargetBufferSize))!=iTargetBufferSize){
-      iResult=-EIO;
+  if(size==1){
+    if (seek_dcsc(address, 0)>=0){
+      if((iResult=read_dcsc(pData, 1, iTargetBufferSize))!=iTargetBufferSize){
+	iResult=-EIO;
+      }
+    }
+  }
+  return iResult;
+}
+
+int Rcu2MultipleRead(uint32_t address, int size, uint32_t* pData)
+{
+  int iResult=0;
+  int iTargetBufferSize=4;
+  if(size==1){
+    if (seek_dcsc(address, 0)>=0){
+      if((iResult=read_dcsc(pData, 1, iTargetBufferSize))!=iTargetBufferSize){
+	iResult=-EIO;
+      }
     }
   }
   return iResult;

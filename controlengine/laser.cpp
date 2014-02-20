@@ -20,7 +20,7 @@
 #include <typeinfo>
 #include <cstdio>
 #include "laser.hpp"
-#include "rcu_issue.h"
+#include "rcu2_issue.h"
 #include "dcb.hpp"
 #include "ser.hpp"
 
@@ -84,47 +84,48 @@ int DevLaser::SynchronizeLocal(){
 }
 
 int DevLaser::ReSynchronizeLocal(){
-    uint32_t u32rawData = 0;
-    uint32_t u32rawLaserEvents = 0;
-    int current=GetCurrentState();
+  CE_Debug("DevLaser::ReSynchronizeLocal\n");
+  uint32_t u32rawData = 0;
+  uint32_t u32rawLaserEvents = 0;
+  int current=GetCurrentState();
+  
+  fpMsgbuffer->SingleRead(MonitoringRegister, &u32rawData);
+  CE_Debug("DevLaser::u32rawData||MonitoringMaskFSMState: %#x, u32rawData:%#x\n", u32rawData & MonitoringMaskFSMState, u32rawData);       
 
-    fpMsgbuffer->SingleRead(MonitoringRegister, &u32rawData);
-    CE_Debug("DevLaser::u32rawData||MonitoringMaskFSMState: %#x, u32rawData:%#x\n", u32rawData & MonitoringMaskFSMState, u32rawData);       
-    switch (u32rawData & MonitoringMaskFSMState) {
-      //  case 0x0:
-      // current = kStateConfigured;
-      // break;
-      //  case 0x8:
-      // current = kStateWarmUp;
-      // break;
-      //  case 0x10:
-      // fpMsgbuffer->SingleRead(ModeFreqVal, &u32rawModeFreqVal);
-      // fpMsgbuffer->SingleRead(MaxNumberOfFlashEvents, &u32rawLaserEvents);
-      // if(u32rawModeFreqVal == 0)
-      //  current = kStateOnFreeRun;
-      // else if(u32rawLaserEvents == 0)
-      //  current = kStateOnTrigger;
-      // else if(u32rawLaserEvents > 0)
-      //  current = kStateOnLimited;
-      // break;
-    case 0x20:
-      current = kStateFlashStop;
-      break;
-    default:
-      break;
-    }
+  switch (u32rawData & MonitoringMaskFSMState) {
+    //  case 0x0:
+    // current = kStateConfigured;
+    // break;
+    //  case 0x8:
+    // current = kStateWarmUp;
+    // break;
+    //  case 0x10:
+    // fpMsgbuffer->SingleRead(ModeFreqVal, &u32rawModeFreqVal);
+    // fpMsgbuffer->SingleRead(MaxNumberOfFlashEvents, &u32rawLaserEvents);
+    // if(u32rawModeFreqVal == 0)
+    //  current = kStateOnFreeRun;
+    // else if(u32rawLaserEvents == 0)
+    //  current = kStateOnTrigger;
+    // else if(u32rawLaserEvents > 0)
+    //  current = kStateOnLimited;
+    // break;
+  case 0x20:
+    current = kStateFlashStop;
+    break;
+  default:
+    break;
+  }
+  
+  uint32_t u32rawNOfEventsInBurst = 0;
+  fpMsgbuffer->SingleRead(NumberOfEventsInBurst, &u32rawNOfEventsInBurst);
+  fpMsgbuffer->SingleRead(LaserCounter, &u32rawLaserEvents);
+  
+  if(u32rawLaserEvents > 0 && u32rawNOfEventsInBurst > 0 && u32rawLaserEvents == u32rawNOfEventsInBurst){
+    current = kStateConfigured;
+    CE_Debug("DevLaser:: ReSynchronizeLocal found Laser fw completed Nof Events, switched back to Stby_Configured");
+  }
 
-    uint32_t u32rawNOfEventsInBurst = 0;
-    fpMsgbuffer->SingleRead(NumberOfEventsInBurst, &u32rawNOfEventsInBurst);
-    fpMsgbuffer->SingleRead(LaserCounter, &u32rawLaserEvents);
-
-    if(u32rawLaserEvents > 0 && u32rawNOfEventsInBurst > 0 && u32rawLaserEvents == u32rawNOfEventsInBurst){
-      current = kStateConfigured;
-      CE_Debug("DevLaser:: ReSynchronizeLocal found Laser fw completed Nof Events, switched back to Stby_Configured");
-    }
-
-    
-    return current;
+  return current;
 }
 
 
@@ -135,7 +136,7 @@ int DevLaser::ArmorLocal(){
   name=name+"_";
 
   //Writable services
-
+  /*
   fServices.push_back(new SerMbAddrS(name+"MODEFREQVAL"               , ModeFreqVal       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"1_FLASHSTARTTIME"     , Laser1_FlashStartTime        , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"1_FLASHENDTIME"       , Laser1_FlashEndTime       , 1, 0, fpMsgbuffer));
@@ -152,8 +153,9 @@ int DevLaser::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"SAMPLECLOCKDIVIDER"        , SampleClockDivider       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TRIGGERCONFIGURATION1"     , TriggerConfiguration1       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TRIGGERCONFIGURATION2"     , TriggerConfiguration2       , 1, 0, fpMsgbuffer));
-
+  */
   //Readable services
+  /*
   fServices.push_back(new SerMbAddrS(name+"RCUVERSION"                , RCUVersion       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"CTPSIGNATURE"              , CTPsignature       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"SHUTTERCOUNTER"            , ShutterCounter       , 1, 0, fpMsgbuffer));
@@ -175,14 +177,15 @@ int DevLaser::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"MAXNUMBEROFFLASHEVENTS"    , MaxNumberOfFlashEvents    , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"NUMBEROFEVENTSINBURST"     , NumberOfEventsInBurst       , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"ENABLES"                   , LaserEnables       , 1, 0, fpMsgbuffer));
-
+  */
   //Trigger Interface services
 
-  fServices.push_back(new SerMbAddrS(name+"TTC_CONTROL"       , TTCControl        , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG1"    , TTCROIConfig1     , 1, 0, fpMsgbuffer)); 
-  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG2"    , TTCROIConfig2     , 1, 0, fpMsgbuffer));
+  //  fServices.push_back(new SerMbAddrS(name+"TTC_CONTROL"       , TTCControl        , 1, 0, fpMsgbuffer));
+  //  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG1"    , TTCROIConfig1     , 1, 0, fpMsgbuffer)); 
+  ///  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG2"    , TTCROIConfig2     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_L1LATENCY"     , TTCL1Latency      , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_L2LATENCY"     , TTCL2Latency      , 1, 0, fpMsgbuffer));
+  /*
   fServices.push_back(new SerMbAddrS(name+"TTC_ROILATENCY"    , TTCRoILatency     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_L1MSGLATENCY"  , TTCL1MsgLatency   , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_PREPULSECNT"   , TTCPrePulseCnt    , 1, 0, fpMsgbuffer));
@@ -203,7 +206,7 @@ int DevLaser::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"TTC_DAQHEADER6"    , TTCDAQHeader6     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_DAQHEADER7"    , TTCDAQHeader7     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_EVENTINFO"     , TTCEventInfo      , 1, 0, fpMsgbuffer));
-
+  */
   return iResult;
 }
 
