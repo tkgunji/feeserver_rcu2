@@ -437,7 +437,8 @@ void resetSimulation();
  * @ingroup dcsc_msg_buffer_access
  */
 int rcuSingleWrite(uint32_t address, uint32_t data);
-int rcuSingleWrite2(uint32_t address, uint32_t pData);
+int Rcu2SingleWrite(uint32_t address, int size, uint32_t pData);
+int Rcu2MultipleWrite(uint32_t address, int size, uint32_t *pData);
 
 /**
  * Read a single location (32bit word)
@@ -447,7 +448,8 @@ int rcuSingleWrite2(uint32_t address, uint32_t pData);
  * @ingroup dcsc_msg_buffer_access
  */
 int rcuSingleRead(uint32_t address, uint32_t* pData);
-int rcuSingleRead2(uint32_t address, uint32_t* pData);
+int Rcu2SingleRead(uint32_t address, int size, uint32_t* pData);
+int Rcu2MultipleRead(uint32_t address, int size, uint32_t* pData);
 
 /**
  * Write a number of 32bit words beginning at a location.
