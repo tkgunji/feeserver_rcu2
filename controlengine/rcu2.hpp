@@ -81,6 +81,16 @@ public:
   virtual int DriverLoad();
 };
 
+
+/*************************************                                                                
+   DCS register inferface 
+*************************************/
+#define BASE_FPGA_FABRIC_FIC0   0x30000000
+#define BASE_FPGA_FABRIC_FIC1   0x50000000
+#define BASE_SPI_0              0x40001000
+#define BASE_I2C_0              0x40002000
+#define BASE_RADMON_JTAG        0x40012000
+
 /*************************************                                                                
    RCU FW2 Registers and Memories                                                                  
 *************************************/
@@ -107,24 +117,24 @@ public:
 #define V2_ALTROHlMEM_WIDTH      32
 #define V2_ALTROHlMEM_SIZE       128
 
-#define V2_FECActiveList         0x5100
+#define V2_FECActiveList         (0x5100 | BASE_FPGA_FABRIC_FIC1)
 #define V2_FECActiveList_WIDTH   32
 #define V2_FECActiveList_SIZE    1
 
-#define V2_FECRDOList            0x5100
+#define V2_FECRDOList            (0x5100 | BASE_FPGA_FABRIC_FIC1)
 #define V2_FECRDOList_WIDTH      32
 #define V2_FECRDOList_SIZE       1
 
-#define V2_FECActiveList_RO       0x8000
+#define V2_FECActiveList_RO      (0x8000 | BASE_FPGA_FABRIC_FIC0)
 #define V2_FECActiveList_RO_WIDTH 32
 #define V2_FECActiveList_RO_SIZE  1
 
-#define V2_FECRDOList_RO         0x8000
+#define V2_FECRDOList_RO         (0x8000 | BASE_FPGA_FABRIC_FIC0)
 #define V2_FECRDOList_RO_WIDTH   32
 #define V2_FECRDOList_RO_SIZE    1
 
 //rcufw2 FECERR_A and FECERR_B registers
-#define V2_FECErrA               0x5110
+#define V2_FECErrA               0x5110 
 #define V2_FECErrA_WIDTH         32
 #define V2_FECErrA_SIZE          1
 
@@ -140,35 +150,35 @@ public:
 #define V2_FECErrB_RO_WIDTH      32
 #define V2_FECErrB_RO_SIZE       1
 
-#define V2_AltroIf               0x5101
+#define V2_AltroIf               (0x5101 | BASE_FPGA_FABRIC_FIC1)
 #define V2_AltroIf_WIDTH         16
 #define V2_AltroIf_SIZE          1
 
-#define V2_AltroTrCfg            0x5102
+#define V2_AltroTrCfg            (0x5102 | BASE_FPGA_FABRIC_FIC1)
 #define V2_AltroTrCfg_WIDTH      16
 #define V2_AltroTrCfg_SIZE       1
 
-#define V2_RDOMod                0x5103
+#define V2_RDOMod                (0x5103 | BASE_FPGA_FABRIC_FIC1)
 #define V2_RDOMod_WIDTH          4
 #define V2_RDOMod_SIZE           1
 
-#define V2_AltroCfg1             0x5104
+#define V2_AltroCfg1             (0x5104 | BASE_FPGA_FABRIC_FIC1)
 #define V2_AltroCfg1_WIDTH       16
 #define V2_AltroCfg1_SIZE        1
 
-#define V2_AltroCfg2             0x5105
+#define V2_AltroCfg2             (0x5105 | BASE_FPGA_FABRIC_FIC1)
 #define V2_AltroCfg2_WIDTH       16
 #define V2_AltroCfg2_SIZE        1
 
-#define V2_RCU_Version           0x5106
+#define V2_RCU_Version           (0x5106 | BASE_FPGA_FABRIC_FIC1)
 #define V2_RCU_Version_WIDTH     1
 #define V2_RCU_Version_SIZE      1
 
-#define V2_RCU_BPVersion         0x5107
+#define V2_RCU_BPVersion         (0x5107 | BASE_FPGA_FABRIC_FIC1)
 #define V2_RCU_BPVersion_WIDTH   1
 #define V2_RCU_BPVersion_SIZE    1
 
-#define V2_RCUId                 0x5108
+#define V2_RCUId                 (0x5108 | BASE_FPGA_FABRIC_FIC1)
 #define V2_RCUId_WIDTH           9
 #define V2_RCUId_SIZE            1
 
@@ -415,91 +425,91 @@ public:
 #define MSMCommand8_BCRegAdr     0
 
 // Defines for the Trigger Receiver Module
-#define TTCControl		0x4000
+#define TTCControl		(0x4000 | BASE_FPGA_FABRIC_FIC1)
 #define TTCControl_WIDTH        24
 #define TTCControl_SIZE         1
 
-#define TTCROIConfig1	        0x4002
+#define TTCROIConfig1	        (0x4002 | BASE_FPGA_FABRIC_FIC1)
 #define TTCROIConfig1_WIDTH     18
 #define TTCROIConfig1_SIZE      1
 
-#define TTCROIConfig2	        0x4003
+#define TTCROIConfig2	        (0x4003 | BASE_FPGA_FABRIC_FIC1)
 #define TTCROIConfig2_WIDTH     18
 #define TTCROIConfig2_SIZE      1
 
-#define TTCL1Latency     	0x4006
+#define TTCL1Latency     	(0x4006 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1Latency_WIDTH      16
 #define TTCL1Latency_SIZE       1
 
-#define TTCL2Latency	        0x4007
+#define TTCL2Latency	        (0x4007 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2Latency_WIDTH      32
 #define TTCL2Latency_SIZE       1
 
-#define TTCRoILatency	        0x4009
+#define TTCRoILatency	        (0x4009 | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoILatency_WIDTH     32
 #define TTCRoILatency_SIZE      1
 
-#define TTCL1MsgLatency	        0x400A
+#define TTCL1MsgLatency	        (0x400A | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgLatency_WIDTH   32
 #define TTCL1MsgLatency_SIZE    1
 
-#define TTCPrePulseCnt	        0x400B
+#define TTCPrePulseCnt	        (0x400B | BASE_FPGA_FABRIC_FIC1)
 #define TTCPrePulseCnt_WIDTH    16
 #define TTCPrePulseCnt_SIZE     1
 
-#define TTCBCIDLocal	        0x400C
+#define TTCBCIDLocal	        (0x400C | BASE_FPGA_FABRIC_FIC1)
 #define TTCBCIDLocal_WIDTH      12
 #define TTCBCIDLocal_SIZE       1
 
-#define TTCL0Counter	        0x400D
+#define TTCL0Counter	        (0x400D | BASE_FPGA_FABRIC_FIC1)
 #define TTCL0Counter_WIDTH      16
 #define TTCL0Counter_SIZE       1
 
-#define TTCL1Counter	        0x400E
+#define TTCL1Counter	        (0x400E | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1Counter_WIDTH      16
 #define TTCL1Counter_SIZE       1
 
-#define TTCL1MsgCounter	        0x400F
+#define TTCL1MsgCounter	        (0x400F | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgCounter_WIDTH   16
 #define TTCL1MsgCounter_SIZE    1
 
-#define TTCL2aCounter	        0x4010
+#define TTCL2aCounter	        (0x4010 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aCounter_WIDTH     16
 #define TTCL2aCounter_SIZE      1
 
-#define TTCL2rCounter	        0x4011
+#define TTCL2rCounter	        (0x4011 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2rCounter_WIDTH     16
 #define TTCL2rCounter_SIZE      1
 
-#define TTCRoICounter	        0x4012
+#define TTCRoICounter	        (0x4012 | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoICounter_WIDTH     16
 #define TTCRoICounter_SIZE      1
 
-#define TTCBunchCounter	        0x4013
+#define TTCBunchCounter	        (0x4013 | BASE_FPGA_FABRIC_FIC1)
 #define TTCBunchCounter_WIDTH   12
 #define TTCBunchCounter_SIZE    1
 
-#define TTCHammingErrorCnt	0x4016
+#define TTCHammingErrorCnt	(0x4016 | BASE_FPGA_FABRIC_FIC1)
 #define TTCHammingErrorCnt_WIDTH 32
 #define TTCHammingErrorCnt_SIZE 1
 
-#define TTCErrorCnt	        0x4017
+#define TTCErrorCnt	        (0x4017 | BASE_FPGA_FABRIC_FIC1)
 #define TTCErrorCnt_WIDTH       32
 #define TTCErrorCnt_SIZE        1
 
-#define TTCBufferedEvents	0x4020
+#define TTCBufferedEvents	(0x4020 | BASE_FPGA_FABRIC_FIC1)
 #define TTCBufferedEvents_WIDTH 5
 #define TTCBufferedEvent_SIZE   1
 
-#define TTCDAQHeader	        0x4021
+#define TTCDAQHeader	        (0x4021 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader_WIDTH      32
 #define TTCDAQHeader_SIZE       1
 
-#define TTCEventInfo	        0x4028
+#define TTCEventInfo	        (0x4028 | BASE_FPGA_FABRIC_FIC1)
 #define TTCEventInfo_WIDTH      18
 #define TTCEventInfo_SIZE       1
 
-#define TTCEventError	        0x4029
+#define TTCEventError	        (0x4029 | BASE_FPGA_FABRIC_FIC1)
 #define TTCEventError_WIDTH     25
 #define TTCEventError_SIZE      1
 
