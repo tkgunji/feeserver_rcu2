@@ -1,20 +1,31 @@
 OBJECTS_DIM=conn_handler.o copy_swap.o diccpp.o dic.o dimcpp.o dim_thr.o discpp.o dis.o dll.o dna.o dtq.o hash.o open_dns.o sll.o swap.o tcpip.o tokenstring.o utilities.o
 SOURCES_DIM=conn_handler.c copy_swap.c dic.c diccpp.cxx dimcpp.cxx dim_thr.c dis.c discpp.cxx dll.c dna.c dtq.c hash.c open_dns.c sll.c swap.c tcpip.c tokenstring.cxx utilities.c
-EXECUTABLE_DIM=libdim.a
 OBJECTS_DNS=dns.o
 SOURCES_DNS=dns.c
 EXECUTABLE_DNS=dns
-CC=arm-uclinuxeabi-gcc
-CXX=arm-uclinuxeabi-g++
+
 MIPSE=MIPSEL
 EXTRAFLAGS=
-#CFLAGS=-c -fPIC -I. -D$(MIPSE) -DPROTOCOL=1 $(EXTRAFLAGS) -I$(INSTALL_ROOT)/A2F/root/usr/include
-CFLAGS=-c  -I. -D$(MIPSE) -DPROTOCOL=1 -I$(INSTALL_ROOT)/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L/rcu2/release/linux-cortexm-1.11.0/A2F/root/usr/lib -pthread  
+
+CFLAGS=-c -fPIC -I. -D$(MIPSE) -DPROTOCOL=1 $(EXTRAFLAGS) 
+CC=gcc
+CXX=g++
+LDFLAGS_DIM=-shared -fPIC -L.
+LDFLAGS_DNS=-fPIC -L. -lpthread
+EXECUTABLE_DIM=libdim.a
+RANLIB=ranlib
+LD=ar cru
+
+ifeq ($(ARCH),arm)
+CC=arm-uclinuxeabi-gcc
+CXX=arm-uclinuxeabi-g++
+CFLAGS=-c  -I. -D$(MIPSE) -DPROTOCOL=1 -I${INSTALL_ROOT}/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L/rcu2/release/linux-cortexm-1.11.0/A2F/root/usr/lib -pthread  
 LDFLAGS_DIM=-L. -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LDFLAGS_DNS=-L. -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LD=arm-uclinuxeabi-ar cru
 RANLIB=arm-uclinuxeabi-ranlib
-
+EXECUTABLE_DIM=libdim.a
+endif
 
 all: $(EXECUTABLE_DIM) $(EXECUTABLE_DNS)
 
@@ -23,6 +34,7 @@ clean:
 	rm -f *.a
 	rm -f *.so
 	rm -f dns
+	rm -f dns.gdb
 
 dns.o: dns.c
 	$(CC) $(CFLAGS) -o dns.o dns.c
@@ -84,8 +96,9 @@ tokenstring.o: tokenstring.cxx
 utilities.o: utilities.c
 	$(CC) $(CFLAGS) -o utilities.o utilities.c
 
-#libdim.so: $(OBJECTS_DIM)
-#	$(CXX) $(LDFLAGS_DIM) $(OBJECTS_DIM) -o $@
+libdim.so: $(OBJECTS_DIM)
+	$(CXX) $(LDFLAGS_DIM) $(OBJECTS_DIM) -o $@
+
 libdim.a:  $(OBJECTS_DIM)
 	$(LD) $(EXECUTABLE_DIM) $(OBJECTS_DIM)
 	$(RANLIB) $(EXECUTABLE_DIM)
