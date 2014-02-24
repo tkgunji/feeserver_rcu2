@@ -28,6 +28,7 @@ int DevFec::CtrRcuGO_ON(CEStateMachine* callbackObject){
 }
 int DevFec::ReSynchronizeLocal(){
   //CE_Debug("DevFec::ReSynchronizeLocal\n");
+  /*
   if (fpFecaccess==NULL) return kStateError;
   uint32_t status=0;
   int nRet=0;
@@ -43,6 +44,7 @@ int DevFec::ReSynchronizeLocal(){
     return kStateFailure;
   }
   if((status&0x3)==0x3) return kStateOn;
+  */
   return kStateStandby;
 }
 int DevFec::EnterStateON(){
@@ -58,7 +60,7 @@ int DevFec::EnterStateON(){
   int nRet=0;
   uint32_t data=0;
   for(int i=0;i<5;i++){
-    nRet=fpFecaccess->ReadFecReg(data, fFec, FECCSR0);
+    //nRet=fpFecaccess->ReadFecReg(data, fFec, FECCSR0);
     if(nRet<0) CE_Warning("ReadFecReg returned error code %d while setting state ON for FEC %d\n", nRet, fFec);
   }
   PreUpdateLocal();
@@ -67,6 +69,7 @@ int DevFec::EnterStateON(){
 
 int DevFec::PreUpdateLocal(){
   //CE_Debug("DevFec::PreUpdateLocal\n");
+  /*
   uint32_t status=0;
   int nRet=0;
   status=0;
@@ -80,6 +83,7 @@ int DevFec::PreUpdateLocal(){
       CE_Debug("Turned on continous ADC for FEC %d (hardware address).\n", fFec);
     }
   }
+  */
   return 0;
 }
 

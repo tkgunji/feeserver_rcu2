@@ -180,7 +180,7 @@ int DevLaser::ArmorLocal(){
   */
   //Trigger Interface services
 
-  //  fServices.push_back(new SerMbAddrS(name+"TTC_CONTROL"       , TTCControl        , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"TTC_CONTROL"       , TTCControl        , 1, 0, fpMsgbuffer));
   //  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG1"    , TTCROIConfig1     , 1, 0, fpMsgbuffer)); 
   ///  fServices.push_back(new SerMbAddrS(name+"TTC_ROICONFIG2"    , TTCROIConfig2     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"TTC_L1LATENCY"     , TTCL1Latency      , 1, 0, fpMsgbuffer));
@@ -512,6 +512,20 @@ int DevLaser::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDa
   case LASER_DISABLE_2:
     iResult = DisableLaser2();
     iResult = 4;
+    break;
+  case LASER_READ_REG:
+    {
+      uint32_t data;
+      const char* pBuffer = pData;
+      int address=0x0;
+      if(sscanf(pBuffer, "0x%x", &address)>0){	
+	fpMsgbuffer->SingleRead(address, &data, 1);
+	CE_Event("DevLaser::Read data =  0x%x (address = 0x%x)\n", data, address);
+	iResult=4;
+      }else{
+	CE_Warning("DevLaser::LASER_READ_REG format is wrong :0x%x\n", pBuffer[0]);
+      }
+    }
     break;
   default:
     CE_Debug("CELaser: unrecognized command id (%#x)\n", cmd);
@@ -928,6 +942,8 @@ int DevLaser::EnableLaser(){
 }
 int DevLaser::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   
+  CE_Event("DevLaser::HighLevelHandler\n");
+
   int iResult=0;
   uint32_t cmd=0;
   int keySize=0;
@@ -992,7 +1008,6 @@ int DevLaser::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
       cmd=LASER_WRITE_TTC_ROILATENCY;
     else if (strncmp(pCommand, "LASER_WRITE_TTC_L1MSGLATENCY", keySize=strlen("LASER_WRITE_TTC_L1MSGLATENCY"))==0)
       cmd=LASER_WRITE_TTC_L1MSGLATENCY;
-
     else if (strncmp(pCommand, "LASER_SET_1_FLASHSTARTTIME", keySize=strlen("LASER_SET_1_FLASHSTARTTIME"))==0)
       cmd=LASER_SET_1_FLASHSTARTTIME;
     else if (strncmp(pCommand, "LASER_SET_1_FLASHENDTIME", keySize=strlen("LASER_SET_1_FLASHENDTIME"))==0)
@@ -1035,30 +1050,45 @@ int DevLaser::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
       cmd=LASER_ARM_SYNC;
     else if(strncmp(pCommand, "LASER_WRITE_ENABLES", keySize=strlen("LASER_WRITE_ENABLES"))==0)
       cmd=LASER_WRITE_ENABLES;
-   if (cmd>0 && keySize>0) {
-      pBuffer+=keySize;
-      len-=keySize;
-      while (*pBuffer==' ' && *pBuffer!=0 && len>0) {pBuffer++; len--;} // skip all blanks
-      uint32_t parameter=0;
-      uint32_t data=0;
-      const char* pPayload=NULL;
-      int iPayloadSize=0;
+    else if(strncmp(pCommand, "LASER_READ_REG", keySize=strlen("LASER_READ_REG"))==0)
+      cmd=LASER_READ_REG;
 
-      if (sscanf(pBuffer, "0x%x", &data)>0) {
-        pPayload=(const char*)&data;
-        iPayloadSize=sizeof(data);
-      } 
-      /**else {
-        CE_Error("error scanning high-level command %s\n", pCommand);
-        iResult=-EPROTO;
+   if (cmd>0 && keySize>0) {
+      if(cmd!=LASER_READ_REG){
+	pBuffer+=keySize;
+	len-=keySize;
+	while (*pBuffer==' ' && *pBuffer!=0 && len>0) {pBuffer++; len--;} // skip all blanks
+	uint32_t parameter=0;
+	uint32_t data=0;
+	const char* pPayload=NULL;
+	int iPayloadSize=0;
+	if(sscanf(pBuffer, "0x%x", &data)>0) {
+	  pPayload=(const char*)&data;
+	  iPayloadSize=sizeof(data);
+	}else {
+	  CE_Error("error scanning high-level command %s\n", pCommand);
+	  iResult=-EPROTO;
+	}
+	if (iResult>=0) {
+	  if ((iResult=issue(cmd, parameter, pPayload, iPayloadSize, rb))>=0) {
+	    iResult=1;
+	  }
+	}
+      }else{
+	std::string parameter="";
+	std::string command=pCommand;
+	if(keySize<command.size()){
+	  if(command[keySize]!=' '){
+	    CE_Warning("High level fee command '%s' not found in parameter group %i\n", command.c_str(), GetGroupId());
+	    return -2;
+	  }
+	  parameter=command.substr(keySize+1,command.size());
+	}
+	if(iResult=issue(cmd, atoi(parameter.c_str()), parameter.c_str(), parameter.size(), rb)>=0){
+	  iResult=1;
+	}
       }
-      **/
-      if (iResult>=0) {
-        if ((iResult=issue(cmd, parameter, pPayload, iPayloadSize, rb))>=0) {
-          iResult=1;
-        }
-      }
-    }
+   }
   } else {
     iResult=-EINVAL;
   }

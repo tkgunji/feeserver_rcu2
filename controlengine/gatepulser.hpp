@@ -81,6 +81,8 @@ protected:
 };
 
 /******************************************************************************/
+#define BASE_FPGA_FABRIC_FIC1   0x50000000
+
 
 /*************************************
  **** Configuration Registers   ******
@@ -184,174 +186,174 @@ protected:
 #define RCUVersion_WIDTH       32
 #define RCUVersion_SIZE        1
 
-#define RestTestReg            0x5301
+#define RestTestReg            (0x5301 | BASE_FPGA_FABRIC_FIC1)
 #define RestTestReg_WIDTH      32
 #define RestTestReg_SIZE       1
 
-#define GlobalRest             0x5300
+#define GlobalRest             (0x5300 | BASE_FPGA_FABRIC_FIC1)
 #define GlobalRest_WIDTH       32
 #define GlobalRest_SIZE        1
 
-#define ARM_SYNCH              0x530A
+#define ARM_SYNCH              (0x530A | BASE_FPGA_FABRIC_FIC1)
 #define ARM_SYNCH_WIDTH        32
 #define ARM_SYNCH_SIZE         1
 
 /*****************************************
  **** Trigger Interface registers   ******
  *****************************************/
-#define TTCControl		0x4000
+#define TTCControl		(0x4000 | BASE_FPGA_FABRIC_FIC1)
 #define TTCControl_WIDTH        24
 #define TTCControl_SIZE         1
 
-#define TTCModulkActionReset          0x4001
+#define TTCModulkActionReset          (0x4001 | BASE_FPGA_FABRIC_FIC1)
 #define TTCModulkActionReset_WIDTH    1
 #define TTCModulkActionReset_SIZE     1
 
-#define TTCROIConfig1	        0x4002
+#define TTCROIConfig1	        (0x4002 | BASE_FPGA_FABRIC_FIC1)
 #define TTCROIConfig1_WIDTH     18
 #define TTCROIConfig1_SIZE      1
 
-#define TTCROIConfig2	        0x4003
+#define TTCROIConfig2	        (0x4003 | BASE_FPGA_FABRIC_FIC1)
 #define TTCROIConfig2_WIDTH     18
 #define TTCROIConfig2_SIZE      1
 
-#define TTCResetCounters        0x4004
+#define TTCResetCounters        (0x4004 | BASE_FPGA_FABRIC_FIC1)
 #define TTCReserCounters_WIDTH  1
 #define TTCReserCounters_SIZE   1
 
-#define TTCIssueTestmode        0x4005
+#define TTCIssueTestmode        (0x4005 | BASE_FPGA_FABRIC_FIC1)
 #define TTCIssueTestmode_WIDTH  1
 #define TTCIssueTestmode_SIZE   1
 
-#define TTCL1Latency     	0x4006
+#define TTCL1Latency     	(0x4006 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1Latency_WIDTH      16
 #define TTCL1Latency_SIZE       1
 
-#define TTCL2Latency	        0x4007
+#define TTCL2Latency	        (0x4007 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2Latency_WIDTH      32
 #define TTCL2Latency_SIZE       1
 
-#define TTCRoILatency	        0x4009
+#define TTCRoILatency	        (0x4009 | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoILatency_WIDTH     32
 #define TTCRoILatency_SIZE      1
 
-#define TTCL1MsgLatency	        0x400A
+#define TTCL1MsgLatency	        (0x400A | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgLatency_WIDTH   32
 #define TTCL1MsgLatency_SIZE    1
 
-#define TTCPrePulseCnt	        0x400B
+#define TTCPrePulseCnt	        (0x400B | BASE_FPGA_FABRIC_FIC1)
 #define TTCPrePulseCnt_WIDTH    16
 #define TTCPrePulseCnt_SIZE     1
 
-#define TTCBCIDLocal	        0x400C
+#define TTCBCIDLocal	        (0x400C | BASE_FPGA_FABRIC_FIC1)
 #define TTCBCIDLocal_WIDTH      12
 #define TTCBCIDLocal_SIZE       1
 
-#define TTCL0Counter	        0x400D
+#define TTCL0Counter	        (0x400D | BASE_FPGA_FABRIC_FIC1)
 #define TTCL0Counter_WIDTH      16
 #define TTCL0Counter_SIZE       1
 
-#define TTCL1Counter	        0x400E
+#define TTCL1Counter	        (0x400E | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1Counter_WIDTH      16
 #define TTCL1Counter_SIZE       1
 
-#define TTCL1MsgCounter	        0x400F
+#define TTCL1MsgCounter	        (0x400F | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgCounter_WIDTH   16
 #define TTCL1MsgCounter_SIZE    1
 
-#define TTCL2aCounter	        0x4010
+#define TTCL2aCounter	        (0x4010 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aCounter_WIDTH     16
 #define TTCL2aCounter_SIZE      1
 
-#define TTCL2rCounter	        0x4011
+#define TTCL2rCounter	        (0x4011 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2rCounter_WIDTH     16
 #define TTCL2rCounter_SIZE      1
 
-#define TTCRoICounter	        0x4012
+#define TTCRoICounter	        (0x4012 | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoICounter_WIDTH     16
 #define TTCRoICounter_SIZE      1
 
-#define TTCBunchCounter	        0x4013
+#define TTCBunchCounter	        (0x4013 | BASE_FPGA_FABRIC_FIC1)
 #define TTCBunchCounter_WIDTH   12
 #define TTCBunchCounter_SIZE    1
 
-#define TTCHammingErrorCnt	0x4016
+#define TTCHammingErrorCnt	(0x4016 | BASE_FPGA_FABRIC_FIC1)
 #define TTCHammingErrorCnt_WIDTH 32
 #define TTCHammingErrorCnt_SIZE 1
 
-#define TTCErrorCnt	        0x4017
+#define TTCErrorCnt	        (0x4017 | BASE_FPGA_FABRIC_FIC1)
 #define TTCErrorCnt_WIDTH       32
 #define TTCErrorCnt_SIZE        1
 
-#define TTCBufferedEvents	0x4020
+#define TTCBufferedEvents	(0x4020 | BASE_FPGA_FABRIC_FIC1)
 #define TTCBufferedEvents_WIDTH 5
 #define TTCBufferedEvent_SIZE   1
 
-#define TTCDAQHeader1	        0x4021
+#define TTCDAQHeader1	        (0x4021 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader1_WIDTH      32
 #define TTCDAQHeader1_SIZE       1
 
-#define TTCDAQHeader2	        0x4022
+#define TTCDAQHeader2	        (0x4022 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader2_WIDTH      32
 #define TTCDAQHeader2_SIZE       1
 
-#define TTCDAQHeader3	        0x4023
+#define TTCDAQHeader3	        (0x4023 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader3_WIDTH      32
 #define TTCDAQHeader3_SIZE       1
 
-#define TTCDAQHeader4	        0x4024
+#define TTCDAQHeader4	        (0x4024 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader4_WIDTH      32
 #define TTCDAQHeader4_SIZE       1
 
-#define TTCDAQHeader5	        0x4025
+#define TTCDAQHeader5	        (0x4025 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader5_WIDTH      32
 #define TTCDAQHeader5_SIZE       1
 
-#define TTCDAQHeader6	        0x4026
+#define TTCDAQHeader6	        (0x4026 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader6_WIDTH      32
 #define TTCDAQHeader6_SIZE       1
 
-#define TTCDAQHeader7	        0x4027
+#define TTCDAQHeader7	        (0x4027 | BASE_FPGA_FABRIC_FIC1)
 #define TTCDAQHeader7_WIDTH      32
 #define TTCDAQHeader7_SIZE       1
 
-#define TTCEventInfo	        0x4028
+#define TTCEventInfo	        (0x4028 | BASE_FPGA_FABRIC_FIC1)
 #define TTCEventInfo_WIDTH      18
 #define TTCEventInfo_SIZE       1
 
-#define TTCEventError	        0x4029
+#define TTCEventError	        (0x4029 | BASE_FPGA_FABRIC_FIC1)
 #define TTCEventError_WIDTH     25
 #define TTCEventError_SIZE      1
 
-#define TTCL1MsgHeader	        0x4030
+#define TTCL1MsgHeader	        (0x4030 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgHeader_WIDTH    12
 #define TTCL1MsgHeader_SIZE     1
 
-#define TTCL1MsgData	        0x4031
+#define TTCL1MsgData	        (0x4031 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgData_WIDTH      12
 #define TTCL1MsgData_SIZE       1
 
-#define TTCL2aMsgHeader 	0x4035
+#define TTCL2aMsgHeader 	(0x4035 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aMsgHeader_WIDTH   12
 #define TTCL2aMsgHeader_SIZE    1
 
-#define TTCL2aMsgData	        0x4036
+#define TTCL2aMsgData	        (0x4036 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aMsgData_WIDTH     12
 #define TTCL2aMsgData_SIZE      1
 
-#define TTCL2rMsgHeader	        0x403D
+#define TTCL2rMsgHeader	        (0x403D | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2rMsgHeader_WIDTH   12
 #define TTCL2rMsgHeader_SIZE    1
 
-#define TTCRoIMsgHeader	        0x403E
+#define TTCRoIMsgHeader	        (0x403E | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoIMsgHeader_WIDTH   12
 #define TTCRoIMsgHeader_SIZE    1
 
-#define TTCRoIMsgData	        0x403F
+#define TTCRoIMsgData	        (0x403F | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoIMsgData_WIDTH     12
 #define TTCRoIMsgData_SIZE      1
 
-#define TTCFIFODAQHeader	0x4081
+#define TTCFIFODAQHeader	(0x4081 | BASE_FPGA_FABRIC_FIC1)
 #define TTCFIFODAQHeader_WIDTH  32
 #define TTCFIFODAQHeader_SIZE   1
 

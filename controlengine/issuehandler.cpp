@@ -96,13 +96,17 @@ int CEIssueHandler::IssueFee(std::string& command, std::vector<uint32_t>& rb){
   pos+=6;
   std::string commandNew=command.substr(5, -5+pos-6);
   std::vector<CEIssueHandler*>::iterator issueHandler=issueHandlers.begin();
+  int ikey = 0;
   while(issueHandler!=issueHandlers.end()){
     if((*issueHandler)->HighLevelHandler(commandNew.c_str(),rb)>0){
+      ikey = 1;
       return pos;
     }
     issueHandler++;
   }
-  CE_Warning("Unknown high level fee command '%s'\n", commandNew.c_str());
+  if(ikey==0){
+    CE_Warning("Unknown high level fee command '%s'\n", commandNew.c_str());
+  }
   return pos;
 }
 
@@ -232,7 +236,7 @@ int ShellCommandHandler::issue(uint32_t cmd, uint32_t parameter, const char* pDa
   std::string inFileName(Ctr::tmpDir + "/FEESERVER_EXEC_IN");
   std::string outFileName(Ctr::tmpDir + "/FEESERVER_EXEC_OUT");
   switch (cmd) {
-  case FEESRV_RCUSH_SCRIPT:
+  case FEESRV_RCU2SH_SCRIPT:
   case FEESRV_EXECUTE_SCRIPT:
   case FEESRV_BINARY_PGM:
     {
@@ -249,7 +253,7 @@ int ShellCommandHandler::issue(uint32_t cmd, uint32_t parameter, const char* pDa
     break;
   }
   switch (cmd) {
-  case FEESRV_RCUSH_SCRIPT:
+  case FEESRV_RCU2SH_SCRIPT:
     command = "rcu-sh b " + outFileName;
     break;
   case FEESRV_EXECUTE_SCRIPT:

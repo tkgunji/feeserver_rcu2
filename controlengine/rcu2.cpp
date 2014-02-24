@@ -88,6 +88,9 @@ int DevRcu2::GetGroupId(){
 int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   //Handling of high-level commands (text strings)
   //High-level commands are typically converted into coresponding low-level (binary) commands and passed to the issue function
+  CE_Event("DevRcu2::HighLevelHandler\n");
+
+
   if(!pCommand){
     CE_Error("Hight level fee command buffer does not exist\n");
     return -1;
@@ -221,10 +224,10 @@ int DevRcu2::ArmorLocal(){
 
   std::string name=GetName();
   //these are the test purposes
-  fServices.push_back(new SerMbAddrS(name+"_CTRLREG", 0x40000, 1, 0, fpMsgbuffer));  
-  fServices.push_back(new SerMbAddrS(name+"_L1_LATENCY_REG", 0x40060, 1, 0, fpMsgbuffer));  
-  fServices.push_back(new SerMbAddrS(name+"_L2_LATENCY_REG", 0x40070, 1, 0, fpMsgbuffer));  
-  fServices.push_back(new SerMbAddrS(name+"_VERSION", 0x51060, 1, 0, fpMsgbuffer));  
+  fServices.push_back(new SerMbAddrS(name+"_CTRLREG", TTCControl, 1, 0, fpMsgbuffer));  
+  fServices.push_back(new SerMbAddrS(name+"_L1_LATENCY_REG", TTCL1Latency, 1, 0, fpMsgbuffer));  
+  fServices.push_back(new SerMbAddrS(name+"_L2_LATENCY_REG", TTCL2Latency, 1, 0, fpMsgbuffer));  
+  fServices.push_back(new SerMbAddrS(name+"_VERSION", V2_RCU_Version, 1, 0, fpMsgbuffer));  
   //list of services inherited from rcu  
   //  fServices.push_back(new SerMbAddrS(name+"_AFL"          , V2_FECActiveList_RO  , 1, 0, fpMsgbuffer));
   ////////////////////////////
@@ -665,6 +668,7 @@ int DevMsgbufferRcu2::SingleWrite(uint32_t address, uint32_t data, uint32_t mode
 int DevMsgbufferRcu2::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode){
   CE_Debug("access to the register 0x%x\n", address);
   return Rcu2SingleRead(address, 1, pData);
+  //return rcuSingleRead(address, pData);
 }
 int DevMsgbufferRcu2::MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize, uint32_t mode){
   return Rcu2MultipleWrite(address, iSize, pData);
