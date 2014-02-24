@@ -16,7 +16,7 @@ LIBDIM=../dim/libdim.a
 ifeq ($(ARCH),arm)
 CXX=arm-uclinuxeabi-g++
 EXECUTABLE=feeserver_rcu2 feeserver_laser feeserver_cpulser feeserver_gpulser 
-CFLAGS=-c -I../dim $(EXTRAFLAGS) -I$(INSTALL_ROOT)/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L/rcu2/release/linux-cortexm-1.11.0/A2F/root/usr/lib -pthread
+CFLAGS=-c -I../dim $(EXTRAFLAGS) -I$(INSTALL_ROOT)/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LDFLAGS=-mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LIBDIM=../dim/libdim.a 
 LIBCC_RCU2=../controlengine/libCommandCoderTpc2.a

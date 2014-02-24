@@ -19,7 +19,7 @@ LD=ar cru
 ifeq ($(ARCH),arm)
 CC=arm-uclinuxeabi-gcc
 CXX=arm-uclinuxeabi-g++
-CFLAGS=-c  -I. -D$(MIPSE) -DPROTOCOL=1 -I${INSTALL_ROOT}/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L/rcu2/release/linux-cortexm-1.11.0/A2F/root/usr/lib -pthread  
+CFLAGS=-c  -I. -D$(MIPSE) -DPROTOCOL=1 -I${INSTALL_ROOT}/A2F/root/usr/include -g -O2 -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread  
 LDFLAGS_DIM=-L. -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LDFLAGS_DNS=-L. -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LD=arm-uclinuxeabi-ar cru
