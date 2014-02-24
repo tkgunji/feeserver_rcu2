@@ -12,6 +12,17 @@ OBJECTS_LASER=$(OBJECTS) laser.o dcb.o
 OBJECTS_TOR=$(OBJECTS) triggeror.o dcb.o
 SOURCES=ctr.cpp laser.cpp phos.cpp busybox.cpp gatepulser.cpp lockguard.cpp statemachine.cpp calibrationpulser.cpp rcu.cpp tpc.cpp dcscMsgBufferInterface.cpp dev.cpp fec.cpp laser.cpp selectmapInterface.cpp messagebuffer.cpp triggeror.cpp issuehandler.cpp ser.cpp dim_services.cpp tpc_common.cpp phos_common.cpp dcb.cpp
 #EXECUTABLE=libCommandCoderTpc.so libCommandCoderTpc2.so libCommandCoderPhs.so libCommandCoderPhs2.so libCommandCoderBb.so libCommandCoderCpulser.so libCommandCoderGpulser.so libCommandCoderLaser.so libCommandCoderTor.so
+
+EXECUTABLE=libCommandCoderTpc2.a libCommandCoderCpulser.a libCommandCoderGpulser.a libCommandCoderLaser.a 
+CXX=g++
+EXTRAFLAGS=
+CFLAGS=-c -fPIC -I../dim $(EXTRAFLAGS)
+LDFLAGS=-fPIC -shared -L../dim -ldim -lpthread
+LD=ar cru
+RANLIB=ranlib
+LIBDIM=../dim/libdim.a
+
+ifeq ($(ARCH),arm)
 EXECUTABLE=libCommandCoderTpc2.a libCommandCoderCpulser.a libCommandCoderGpulser.a libCommandCoderLaser.a
 CXX=arm-uclinuxeabi-g++
 EXTRAFLAGS=
@@ -20,6 +31,7 @@ LDFLAGS=-mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread ../l
 LD=arm-uclinuxeabi-ar cru
 RANLIB=arm-uclinuxeabi-ranlib
 LIBDIM=../dim/libdim.a
+endif 
 
 all: $(SOURCES) $(EXECUTABLE)
 
