@@ -7,8 +7,8 @@ EXECUTABLE_FEESERVERCTRL=feeserver-ctrl
 CXX=g++
 EXTRAFLAGS=
 CFLAGS=-c -fPIC -I../dim $(EXTRAFLAGS)
-LDFLAGS_FEECLIENT=-fPIC -shared -L../dim -ldim -lpthread
-LDFLAGS_FEESERVERCTRL=-fPIC -L. -L../dim -ldim -lfeeclient -lpthread
+LDFLAGS_FEECLIENT=-fPIC -shared -L./dim -ldim -lpthread
+LDFLAGS_FEESERVERCTRL=-fPIC -L. -L./dim -ldim -lfeeclient -lpthread
 
 all: $(EXECUTABLE_FEECLIENT) $(EXECUTABLE_FEESERVERCTRL) 
 
