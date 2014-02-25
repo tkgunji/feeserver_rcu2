@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "gatepulser.hpp"
-#include "rcu2_issue.h"
+#include "rcu_issue.h"
 #include "dcb.hpp"
 #include "ser.hpp"
 

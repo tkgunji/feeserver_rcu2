@@ -4,7 +4,7 @@
 #include <fstream>
 #include <typeinfo>
 #include "rcu2.hpp"
-#include "rcu2_issue.h"
+#include "rcu_issue.h"
 #include "ser.hpp"
 #include "dcscMsgBufferInterface.h"
 
@@ -82,7 +82,7 @@ int DevRcu2::ReSynchronizeLocal(){
 
 int DevRcu2::GetGroupId(){
   //Defining the command group of the RCU2.
-  return FEESVR_CMD_RCU2;
+  return FEESVR_CMD_RCU;
 }
 
 int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
@@ -100,33 +100,32 @@ int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   std::string command=pCommand;
   std::string test="";
   if(command.find(test="EXAMPLE_COMMAND_1",0)==0){ keySize=test.size(); cmd=EXAMPLE_COMMAND_1; }
-  else if(command.find(test="EXAMPLE_COMMAND_2",0)==0){ keySize=test.size(); cmd=EXAMPLE_COMMAND_2; }
-  else if(command.find(test="RCU2_READ_STATUS_REG",0)==0){ keySize=test.size(); cmd=RCU2_READ_STATUS_REG; }
-  else if(command.find(test="RCU2_WRITE_TO_REG",0)==0){ keySize=test.size(); cmd=RCU2_WRITE_TO_REG; }
+  if(command.find(test="RCU2_READ_STATUS_REG",0)==0){ keySize=test.size(); cmd=RCU_READ_STATUS_REG; }
+  else if(command.find(test="RCU2_WRITE_TO_REG",0)==0){ keySize=test.size(); cmd=RCU_WRITE_TO_REG; }
 
   /// following commands are added from rcu
-  else if(command.find(test="RCU2_WRITE_AFL", 0)==0){keySize=test.size(); cmd=RCU2_WRITE_AFL;}
-  else if(command.find(test="RCU2_READ_AFL",0)==0){keySize=test.size(); cmd=RCU2_READ_AFL;}
-  else if(command.find(test="RCU2_WRITE_MEMORY",0)==0){keySize=test.size(); cmd=RCU2_WRITE_TO_REG;}
-  else if(command.find(test="RCU2_READ_FW_VERSION",0)==0){keySize=test.size();cmd=RCU2_READ_FW_VERSION;}
-  else if(command.find(test="RCU2_RESET",0)==0){keySize=test.size();cmd=RCU2_RESET;}
-  else if(command.find(test="RCU2_SYNC_SCLK_L1TTC",0)==0){keySize=test.size(); cmd=RCU2_SYNC_SCLK_L1TTC;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_EXECUTE",0)==0){keySize=test.size(); cmd=RCU2_ALTRO_INSTRUCTION_EXECUTE;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_CLEAR",0)==0){keySize=test.size(); cmd=RCU2_ALTRO_INSTRUCTION_CLEAR;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_WRITE_FILE",0)==0){keySize=test.size(); cmd=RCU2_ALTRO_INSTRUCTION_WRITE_FILE;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_READ_FILE",0)==0){keySize=test.size(); cmd=RCU2_ALTRO_INSTRUCTION_READ_FILE;}
-  else if(command.find(test="RCU2_CONFGFEC",0)==0){keySize=test.size(); cmd=RCU2_CONFGFEC;}
-  else if(command.find(test="RCU2_WRITE_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU2_WRITE_EN_INT_BA;}
-  else if(command.find(test="RCU2_READ_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU2_READ_EN_INT_BA;}
+  else if(command.find(test="RCU2_WRITE_AFL", 0)==0){keySize=test.size(); cmd=RCU_WRITE_AFL;}
+  else if(command.find(test="RCU2_READ_AFL",0)==0){keySize=test.size(); cmd=RCU_READ_AFL;}
+  else if(command.find(test="RCU2_WRITE_MEMORY",0)==0){keySize=test.size(); cmd=RCU_WRITE_TO_REG;}
+  else if(command.find(test="RCU2_READ_FW_VERSION",0)==0){keySize=test.size();cmd=RCU_READ_FW_VERSION;}
+  else if(command.find(test="RCU2_RESET",0)==0){keySize=test.size();cmd=RCU_RESET;}
+  else if(command.find(test="RCU2_SYNC_SCLK_L1TTC",0)==0){keySize=test.size(); cmd=RCU_SYNC_SCLK_L1TTC;}
+  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_EXECUTE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_EXECUTE;}
+  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_CLEAR",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_CLEAR;}
+  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_WRITE_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_WRITE_FILE;}
+  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_READ_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_READ_FILE;}
+  else if(command.find(test="RCU2_CONFGFEC",0)==0){keySize=test.size(); cmd=RCU_CONFGFEC;}
+  else if(command.find(test="RCU2_WRITE_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_WRITE_EN_INT_BA;}
+  else if(command.find(test="RCU2_READ_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_READ_EN_INT_BA;}
   else if(command.find(test="REG_CFG_EXECUTE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE;}
   else if(command.find(test="REG_CFG_EXECUTE_SINGLE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE_SINGLE;}
   else if(command.find(test="REG_CFG_CLEAR",0)==0){keySize=test.size(); cmd=REG_CFG_CLEAR;}
   else if(command.find(test="REG_CFG_WRITE_FILE",0)==0){keySize=test.size(); cmd=REG_CFG_WRITE_FILE;}
   else if(command.find(test="REG_CFG_READ_FILE",0)==0){keySize=test.size();  cmd=REG_CFG_READ_FILE;}
-  else if(command.find(test="RCU2_DRIVER_RELOAD",0)==0){keySize=test.size(); cmd=RCU2_DRIVER_RELOAD;}
-  else if(command.find(test="RCU2_DRIVER_UNLOAD",0)==0){keySize=test.size(); cmd=RCU2_DRIVER_UNLOAD;}
-  else if(command.find(test="RCU2_DRIVER_LOAD",0)==0){keySize=test.size(); cmd=RCU2_DRIVER_LOAD;}
-  else if(command.find(test="RCU2_TEST_ERROR",0)==0){keySize=test.size(); cmd=RCU2_TEST_ERROR;}
+  else if(command.find(test="RCU2_DRIVER_RELOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_RELOAD;}
+  else if(command.find(test="RCU2_DRIVER_UNLOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_UNLOAD;}
+  else if(command.find(test="RCU2_DRIVER_LOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_LOAD;}
+  else if(command.find(test="RCU2_TEST_ERROR",0)==0){keySize=test.size(); cmd=RCU_TEST_ERROR;}
   else return 0;
   
   std::string parameter="";
@@ -274,13 +273,10 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
 
   switch(cmd){
   case EXAMPLE_COMMAND_1:
-    //Return number of bytes of the command buffer (pData) consumed by the command
+    CE_Debug("Command:: No operation\n");
     iResult=0;
     break;
-  case EXAMPLE_COMMAND_2:
-    iResult=0;
-    break;
-  case RCU2_READ_STATUS_REG:
+  case RCU_READ_STATUS_REG:
     CE_Debug("Command::RCU2_READ_STATUS_REG\n");
     ////////////////////////////////////////////////
     //////// parameter.c_str() = pData = [addr] [data] /////
@@ -293,7 +289,7 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       iResult=0;
     }
     break;
-  case RCU2_WRITE_TO_REG:
+  case RCU_WRITE_TO_REG:
     {
       CE_Debug("Command::RCU2_WRITE_TO_REG\n");
       ////////////////////////////////////////////////
@@ -312,11 +308,11 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       }
     }
     break;
-  case RCU2_WRITE_AFL:
+  case RCU_WRITE_AFL:
     SetAfl(*(uint32_t*)pData);
     iResult=4;
     break;
-  case RCU2_READ_AFL:
+  case RCU_READ_AFL:
     {
       uint32_t rbsize=rb.size();
       rb.resize(rbsize+parameter);
@@ -324,7 +320,7 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       iResult=0;
     }
     break;
-  case RCU2_READ_FW_VERSION:
+  case RCU_READ_FW_VERSION:
     {
       uint32_t rbsize=rb.size();
       rb.resize(rbsize+1);
@@ -332,7 +328,7 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       iResult=0;
     }
     break;
-  case RCU2_RESET:
+  case RCU_RESET:
     {
       uint32_t cmd=0;
       switch(parameter){
@@ -345,11 +341,11 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       iResult=0;
     }
     break;
-  case RCU2_SYNC_SCLK_L1TTC:
+  case RCU_SYNC_SCLK_L1TTC:
     fpMsgbuffer->SingleWrite(V2_CMDSCLKsync,0);
     iResult=0;
     break;
-  case RCU2_ALTRO_INSTRUCTION_EXECUTE:
+  case RCU_ALTRO_INSTRUCTION_EXECUTE:
     {
       uint32_t someError=0;
       uint32_t stickyErrorRepeat=2;
@@ -439,11 +435,11 @@ gister: %#x, FEC B error register: %#x\n", errorA, errorB);}
       iResult=0;
     }
     break;
-  case RCU2_ALTRO_INSTRUCTION_CLEAR:
+  case RCU_ALTRO_INSTRUCTION_CLEAR:
     fAltroInstr.clear();
     iResult=0;
     break;
-  case RCU2_ALTRO_INSTRUCTION_WRITE_FILE:
+  case RCU_ALTRO_INSTRUCTION_WRITE_FILE:
     {
       uint32_t size=fAltroInstr.size()*2;
       uint32_t* imem=new uint32_t[size];
@@ -471,7 +467,7 @@ gister: %#x, FEC B error register: %#x\n", errorA, errorB);}
       if(imem){delete[] imem; imem=0;}
     }
     break;
-  case RCU2_ALTRO_INSTRUCTION_READ_FILE:
+  case RCU_ALTRO_INSTRUCTION_READ_FILE:
     {
       std::ifstream imemFile(imemFileName.c_str(), std::ios::in|std::ios::binary);
       if(imemFile.fail()){
@@ -496,16 +492,16 @@ gister: %#x, FEC B error register: %#x\n", errorA, errorB);}
       iResult=0;
     }
     break;
-  case RCU2_CONFGFEC:
+  case RCU_CONFGFEC:
     fpMsgbuffer->SingleWrite(CONFGFEC,1);
     sleep(1);
     iResult=0;
     break;
-  case RCU2_WRITE_EN_INT_BA: //this address needs to be checked!
+  case RCU_WRITE_EN_INT_BA: //this address needs to be checked!
     fpMsgbuffer->SingleWrite(FECINTmode, *(uint32_t*)pData);
     iResult=4;
     break;
-  case RCU2_READ_EN_INT_BA: //this address needs to be checked! 
+  case RCU_READ_EN_INT_BA: //this address needs to be checked! 
     {
       uint32_t rbsize=rb.size();
       rb.resize(rbsize+1);
@@ -596,25 +592,25 @@ gister: %#x, FEC B error register: %#x\n", errorA, errorB);}
       iResult=0;
     }
     break;
-  case RCU2_DRIVER_RELOAD:
+  case RCU_DRIVER_RELOAD:
     if(fpMsgbuffer->DriverReload()<0){
       CE_Error("RCU driver reload failed with error\n");
     }
     iResult=0;
     break;
-  case RCU2_DRIVER_UNLOAD:
+  case RCU_DRIVER_UNLOAD:
     if(fpMsgbuffer->DriverUnload()<0){
       CE_Error("RCU driver unload failed with error\n");
     }
     iResult=0;
     break;
-  case RCU2_DRIVER_LOAD:
+  case RCU_DRIVER_LOAD:
     if(fpMsgbuffer->DriverLoad()<0){
       CE_Error("RCU driver load failed with error\n");
     }
     iResult=0;
     break;
-  case RCU2_TEST_ERROR:
+  case RCU_TEST_ERROR:
     CE_Debug("Rcu testing error state\n");
     SetErrorState();
     break;

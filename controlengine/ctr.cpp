@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "ctr.hpp"
-#include "rcu2_issue.h"
+#include "rcu_issue.h"
 #include "issuehandler.hpp"
 
 Ctr::message_t Ctr::message;
