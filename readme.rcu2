@@ -1,0 +1,103 @@
+Preparing FeeServer (for TPC using RCU2)
+
+//________________________________________________________________________________________________________//
+[1] How to compile (on the clinet):
+$ git clone git://github.com/tkgunji/feeserver_rcu2 
+$ cd feeserver_rcu2
+$ make arm  (please read [4-1]. you need to set some enviromnent variables before make.)
+$ ls bin/arm/
+dns                feeserver_cpulser.gdb  feeserver_laser      feeserver_rcu2.gdb        libCommandCoderLaser.a  libdim.so
+feeserver-ctrl     feeserver_gpulser      feeserver_laser.gdb  libCommandCoderCpulser.a  libCommandCoderTpc2.a   libfeeclient.so
+feeserver_cpulser  feeserver_gpulser.gdb  feeserver_rcu2       libCommandCoderGpulser.a  libdim.a
+
+*** caveate 
+dns, libdim.so, libfeeclient.so, feeserver-ctrl --> this should executed on the client PC
+feeserver_XXXX, feeserver_XXXX.gdb, libCommandCoderXXXX.a, libdim.a --> this is needed for cortex M3 and executed on SF2
+*** caveate 
+
+//________________________________________________________________________________________________________//
+[2] The way to launch the feeserver, 
+[2-1] (client)
+$ cd bin/arm
+$ export DIM_DNS_NODE=localhost
+$ ./dns 
+or 
+If you have a TRD repository in /etc/yum.repos.d, you can install dns and dim_did via yum.
+$ yum install dim-dns
+$ yum install dim-utils
+$ export DIM_DNS_NODE=localhost
+$ /etc/init.d/dim-dns start
+$ dim_did & 
+
+
+[2-2] (host)
+SF2 linux can mount the directory on the host.
+$ ssh m2s-som  // m2s-som is my SF2 hostname
+~ # export DIM_DNS_NODE=192.168.0.1 (IP address of my client PC)
+~ # /mnt/feeserver_rcu2/bin/arm/feeserver_rcu2 FEE_SERVER_NAME=feesvr_rcu2
+
+
+[2-3] (client)
+Some command can be sent from the client 
+$ cd bin/arm
+$ export LD_LIBRARY_PATH=$(pwd)
+$ export DIM_DNS_NODE=localhost
+$ echo "<action>GO_IDLE</action>" | ./feeserver-ctrl feesvr_rcu2
+$ echo '<fee>CE_SET_LOGGING_LEVEL 2 </fee>' | ./feeserver-ctrl feesvr_rcu2
+$ echo '<fee>RCU2_READ_STATUS_REG 0x40060</fee>' | ./feeserver-ctrl feesvr_rcu2
+$ echo '<fee>RCU2_WRITE_TO_REG (addr) (data) </fee>' | ./feeserver-ctrl feesvr_rcu2
+$ echo '<fee>CE_UPDATE_SLEEP 5 </fee>' | ./feeserver-ctrl feesvr_rcu2
+
+//________________________________________________________________________________________________________//
+[3] installation of the RCU2 driver 
+To access the registers in feeserver/CE, one needs to install the driver for RCU2.
+*** following parts need to be finized. ***
+[3-1] client PC
+Compiation of my privat driver for RCU2:
+$ git clone git://github.com/tkgunji/rcu2linuxtest.git
+$ cd rcu2linuxtest/rculinux-2.0/build/
+(you need to set envrionment variables 
+$ make (please read [4-1]. you need to set some enviromnent variables before make.)
+$ ls drivers/*ko
+drivers/sample.ko    --> this is for testing 
+drivers/sample2.ko   --> this is used for feeserver
+drivers/rcubus_driver.ko --> this is not used. sample2.ko should be merged into rcubus_driver.ko... under development...
+
+[3-2] host SF2 
+~ # insmod /mnt/rcu2linuxtest/rculinux-2.0/build/sample2.ko
+~ $ mknod /dev/sample2 c 177 0
+(Feeserver opens "/dev/sample2" to access the registers in RCU2.)
+
+This needs to be done before feeserver_XXX is launced on SF2.
+
+If you install this module, you can access the registers from commandline 
+register read:
+~ # /mnt/rcu2linuxtest/rculinux-2.0/build/src/app rd 0x50004000 
+register write:
+~ # /mnt/rcu2linuxtest/rculinux-2.0/build/src/app wr (address) (value) 
+
+
+//________________________________________________________________________________________________________//
+[4] Note
+[4-1] You need to have arm-2010q1 toolchain for cortex M3 archtecture. 
+-http://www.codesourcery.com/sgpp/lite/arm/portal/package6503/public/arm-uclinuxeabi/arm-2010q1-189-arm-uclinuxeabi-i686-pc-linux-gnu.tar.bz2
+or
+-$ wget http://www.codesourcery.com/sgpp/lite/arm/portal/package6503/public/arm-uclinuxeabi/arm-2010q1-189-arm-uclinuxeabi-i686-pc-linux-gnu.tar.bz2
+-$ tar xvfj arm-2010q1-189-arm-uclinuxeabi-i686-pc-linux-gnu.tar.bz2 
+-$ ls 
+arm-2010q1  bin  share
+-$ export TOOLCHAIN=arm-2010q1
+-$ export INSTALL_ROOT=`pwd`
+-$ epxort TOOLS_PATH=$INSTALL_ROOT/tools
+-$ export CROSS_PATH=$TOOLS_PATH/$TOOLCHAIN/bin
+-$ export PATH=$TOOLS_PATH/bin:$CROSS_PATH:$PATH
+# Path to cross-tools
+-$ export CROSS_COMPILE=arm-uclinuxeabi-
+-$ export CROSS_COMPILE_APPS=arm-uclinuxeabi-
+You need to export these envrioments to compile feeserver/CE staff.
+
+[4-2] If you need trd repository, please contact me....
+
+Any questions, please let me know. 
+
+Taku Gunji (Taku.Gunji@cern.ch)
