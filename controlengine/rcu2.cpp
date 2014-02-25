@@ -100,7 +100,7 @@ int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   std::string command=pCommand;
   std::string test="";
   if(command.find(test="EXAMPLE_COMMAND_1",0)==0){ keySize=test.size(); cmd=EXAMPLE_COMMAND_1; }
-  if(command.find(test="RCU2_READ_STATUS_REG",0)==0){ keySize=test.size(); cmd=RCU_READ_STATUS_REG; }
+  if(command.find(test="RCU2_READ_REG",0)==0){ keySize=test.size(); cmd=RCU_READ_STATUS_REG; }
   else if(command.find(test="RCU2_WRITE_TO_REG",0)==0){ keySize=test.size(); cmd=RCU_WRITE_TO_REG; }
 
   /// following commands are added from rcu
@@ -228,16 +228,16 @@ int DevRcu2::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"_L2_LATENCY_REG", TTCL2Latency, 1, 0, fpMsgbuffer));  
   fServices.push_back(new SerMbAddrS(name+"_VERSION", V2_RCU_Version, 1, 0, fpMsgbuffer));  
   //list of services inherited from rcu  
-  //  fServices.push_back(new SerMbAddrS(name+"_AFL"          , V2_FECActiveList_RO  , 1, 0, fpMsgbuffer));
-  ////////////////////////////
-  // following two addresses are not in the current rcu2 register map or address is not indentical !!
-  // to be confirmed 
-  //fServices.push_back(new SerMbAddrS(name+"_FECERR_A"     , V2_FECErrA_RO     , 1, 0, fpMsgbuffer));
-  //fServices.push_back(new SerMbAddrS(name+"_FECERR_B"     , V2_FECErrB_RO     , 1, 0, fpMsgbuffer));
-  //fServices.push_back(new SerMbAddrS(name+"_FWVERSION"    , RCUFwVersion      , 1, 0, fpMsgbuffer));
-  //fServices.push_back(new SerMbAddrS(name+"_DCS_FWVERSION", DCSFwVersion      , 1, 0, fpMsgbuffer));
-  //fServices.push_back(new SerMbAddrS(name+"_DCS_OLDMODE"  , DCSOldMode        , 1, 0, fpMsgbuffer));
-  //fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS"   , FECErrReg         , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_AFL"          , V2_FECActiveList_RO  , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_AI"     , V2_FECErrAI_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_AO"     , V2_FECErrAO_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_BI"     , V2_FECErrBI_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_BO"     , V2_FECErrBO_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FWVERSION"    , RCUFwVersion      , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_DCS_FWVERSION", DCSFwVersion      , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_DCS_OLDMODE"  , DCSOldMode        , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS"   , FECErrReg         , 1, 0, fpMsgbuffer));
+
   ////////////////////////////
 
   //std::vector<uint32_t> temp;
@@ -257,7 +257,7 @@ int DevRcu2::ArmorLocal(){
   //Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, DevRcu2::Rcu2AdcRead, 0, 0, 0, this);
   //name=GetName()+"_RADMON2";
   //Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, DevRcu2::Rcu2AdcRead, 0, 4, 0, this);
-
+  
   return 0;
 }
 
@@ -277,10 +277,13 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
     iResult=0;
     break;
   case RCU_READ_STATUS_REG:
-    CE_Debug("Command::RCU2_READ_STATUS_REG\n");
+    CE_Debug("Command::RCU2_READ_REG\n");
     ////////////////////////////////////////////////
     //////// parameter.c_str() = pData = [addr] [data] /////
     if(sscanf(pBuffer, "0x%x", &address)>0){
+      uint32_t rbsize=rb.size();
+      rb.resize(rbsize+1);
+      fpMsgbuffer->SingleRead(address,&rb[rbsize]);
       fpMsgbuffer->SingleRead(address, &data); 
       CE_Event("DevRcu2 read data =  0x%x (address = 0x%x)\n", data, address);
       iResult=0;
@@ -324,7 +327,7 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
     {
       uint32_t rbsize=rb.size();
       rb.resize(rbsize+1);
-      fpMsgbuffer->SingleRead(RCUFwVersion, &rb[rbsize]);
+      fpMsgbuffer->SingleRead(V2_RCU_Version,&rb[rbsize]);
       iResult=0;
     }
     break;
@@ -384,8 +387,10 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
 	  }
 	  if(index>=V2_ALTROInstMEM_SIZE || end==1){
 	    uint32_t errorRes=0;
-	    uint32_t errorA=0;
-	    uint32_t errorB=0;
+	    uint32_t errorAI=0;
+	    uint32_t errorBI=0;
+	    uint32_t errorAO=0;
+	    uint32_t errorBO=0;
 	    uint32_t errorBusy=0;
 	    uint32_t i=0;
 	    uint32_t j=0;
@@ -403,29 +408,36 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
 	      fpMsgbuffer->SingleWrite(V2_CMDExecALTRO, 0);
 	      fpMsgbuffer->MultipleRead(V2_ALTROResultMEM, V2_ALTROResultMEM_SIZE, rmem);
 	      for(j=0;j<index;j++) if((rmem[j]&0x100000)!=0){errorRes=rmem[j]; break;}
-	      fpMsgbuffer->SingleRead(V2_FECErrA_RO,&errorA);
-	      fpMsgbuffer->SingleRead(V2_FECErrB_RO,&errorB);
+	      fpMsgbuffer->SingleRead(V2_FECErrAI_RO,&errorAI);
+	      fpMsgbuffer->SingleRead(V2_FECErrBI_RO,&errorBI);
+	      fpMsgbuffer->SingleRead(V2_FECErrAO_RO,&errorAO);
+	      fpMsgbuffer->SingleRead(V2_FECErrBO_RO,&errorBO);
 	      fpMsgbuffer->SingleRead(V2_BUSBSY,&errorBusy);
 	      i++;
 	    }
-	    while(i<4 && (errorA!=0 || errorB!=0 || (errorRes&0x100000)!=0 || (errorBusy&0x1)!=0));
+	    while(i<4 && (errorAI!=0 || errorBI!=0 || errorAO!=0 || errorBO!=0 || (errorRes&0x100000)!=0 || (errorBusy&0x1)!=0));
 	    if(i>=4 && (errorRes&100000)!=0) {someError=1; CE_Error("Execution of instruction memory failed; result memory line %#x: %#x (stickyErrorRepeat=%#x)\n", j, errorRes, stickyErrorRepeat);}
-	    if(i>=4 && errorA!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC A error register: %#x (stickyErrorRepeat=%#x)\n", errorA, stickyErrorRepeat);}
-	    if(i>=4 && errorB!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC B error register: %#x (stickyErrorRepeat=%#x)\n", errorB, stickyErrorRepeat);}
+	    if(i>=4 && errorAI!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC AI error register: %#x (stickyErrorRepeat=%#x)\n", errorAI, stickyErrorRepeat);}
+	    if(i>=4 && errorBI!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC BI error register: %#x (stickyErrorRepeat=%#x)\n", errorBI, stickyErrorRepeat);}
+	    if(i>=4 && errorAO!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC AO error register: %#x (stickyErrorRepeat=%#x)\n", errorAO, stickyErrorRepeat);}
+	    if(i>=4 && errorBO!=0) {someError=1; CE_Error("Execution of instruction memory failed; FEC BO error register: %#x (stickyErrorRepeat=%#x)\n", errorBO, stickyErrorRepeat);}
 	    if(i>=4 && (errorBusy&0x2)!=0){someError=1; CE_Error("Execution of instruction memory failed; BusBusy register: %#x (stickyErrorRepeat=%#x)\n", errorBusy, stickyErrorRepeat);}
 	    index=0;
 	  }
 	}
 	if(imem){delete[] imem; imem=0;}
 	if(rmem){delete[] rmem; rmem=0;}
-	uint32_t errorA=0;
-	uint32_t errorB=0;
-	fpMsgbuffer->SingleRead(V2_FECErrA_RO,&errorA); //this address needs to be checked 
-	fpMsgbuffer->SingleRead(V2_FECErrB_RO,&errorB); //this address needs to be checked
-	if((errorA&0x1) || (errorB&0x1)){
+	uint32_t errorAI=0;
+	uint32_t errorBI=0;
+	uint32_t errorAO=0;
+	uint32_t errorBO=0;
+	fpMsgbuffer->SingleRead(V2_FECErrAI_RO,&errorAI);
+	fpMsgbuffer->SingleRead(V2_FECErrBI_RO,&errorBI);
+	fpMsgbuffer->SingleRead(V2_FECErrAO_RO,&errorAO);
+	fpMsgbuffer->SingleRead(V2_FECErrBO_RO,&errorBO);
+	if((errorAI&0x1) || (errorBI&0x1) || (errorAO&0x1) || (errorBO&0x1)){
 	  stickyErrorRepeat--;
-	  if(!stickyErrorRepeat) {someError=1; CE_Error("Execution of instruction memory failed; unrecoverable sticky bit found, FEC A error re\
-gister: %#x, FEC B error register: %#x\n", errorA, errorB);}
+	  if(!stickyErrorRepeat) {someError=1; CE_Error("Execution of instruction memory failed; unrecoverable sticky bit found, FEC AI/AO error register: %#x/%#x, FEC BI/BO error register: %#x/%#x\n", errorAI, errorAO, errorBI, errorBO);}
 	  else {someError=0; fpMsgbuffer->SingleWrite(V2_CMDRESET,0);}
 	}
 	else stickyErrorRepeat=0;
@@ -659,10 +671,11 @@ int DevMsgbufferRcu2::DriverLoad(){
   return 1;
 }
 int DevMsgbufferRcu2::SingleWrite(uint32_t address, uint32_t data, uint32_t mode){
+  CE_Debug("access to the register 0x%x for writing\n", address);
  return Rcu2SingleWrite(address, 1, data);
 }
 int DevMsgbufferRcu2::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode){
-  CE_Debug("access to the register 0x%x\n", address);
+  CE_Debug("access to the register 0x%x for reading\n", address);
   return Rcu2SingleRead(address, 1, pData);
   //return rcuSingleRead(address, pData);
 }

@@ -133,22 +133,40 @@ public:
 #define V2_FECRDOList_RO_WIDTH   32
 #define V2_FECRDOList_RO_SIZE    1
 
+
 //rcufw2 FECERR_A and FECERR_B registers
-#define V2_FECErrA               0x5110 
-#define V2_FECErrA_WIDTH         32
-#define V2_FECErrA_SIZE          1
+//#define V2_FECErrA               0x5110 
+//#define V2_FECErrA_WIDTH         32
+//#define V2_FECErrA_SIZE          1
 
-#define V2_FECErrB               0x5111
-#define V2_FECErrB_WIDTH         32
-#define V2_FECErrB_SIZE          1
+//#define V2_FECErrB               0x5111
+//#define V2_FECErrB_WIDTH         32
+//#define V2_FECErrB_SIZE          1
 
-#define V2_FECErrA_RO            0x800A
-#define V2_FECErrA_RO_WIDTH      32
-#define V2_FECErrA_RO_SIZE       1
+//#define V2_FECErrA_RO            0x800A
+//#define V2_FECErrA_RO_WIDTH      32
+//#define V2_FECErrA_RO_SIZE       1
 
-#define V2_FECErrB_RO            0x800B
-#define V2_FECErrB_RO_WIDTH      32
-#define V2_FECErrB_RO_SIZE       1
+//#define V2_FECErrB_RO            0x800B
+//#define V2_FECErrB_RO_WIDTH      32
+//#define V2_FECErrB_RO_SIZE       1
+
+#define V2_FECErrAI_RO            (0x8006 | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrAI_RO_WIDTH      21     
+#define V2_FECErrAI_RO_SIZE       1       
+
+#define V2_FECErrAO_RO            (0x8007 | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrAO_RO_WIDTH      21     
+#define V2_FECErrAO_RO_SIZE       1       
+
+#define V2_FECErrBI_RO            (0x8008 | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrBI_RO_WIDTH      21     
+#define V2_FECErrBI_RO_SIZE       1       
+
+#define V2_FECErrBO_RO            (0x8009 | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrBO_RO_WIDTH      21     
+#define V2_FECErrBO_RO_SIZE       1       
+
 
 #define V2_AltroIf               (0x5101 | BASE_FPGA_FABRIC_FIC1)
 #define V2_AltroIf_WIDTH         16
@@ -182,27 +200,25 @@ public:
 #define V2_RCUId_WIDTH           9
 #define V2_RCUId_SIZE            1
 
-#define V2_BUSBSY                0x5116
+#define V2_BUSBSY                (0x5116 | BASE_FPGA_FABRIC_FIC1)
 #define V2_BUSBSY_WIDTH          1
 #define V2_BUSBSY_SIZE           1
 
-#define V2_CMDRESET              0x5300    // 1bit x 1
-
+#define V2_CMDRESET              (0x5300 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
 //Front End Card reset
-#define V2_CMDRESETFEC           0x5301    // 1bit x 1
-
+#define V2_CMDRESETFEC           (0x5301 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
 //RCU reset
-#define V2_CMDRESETRCU           0x5302    // 1bit x 1
+#define V2_CMDRESETRCU           (0x5302 | BASE_FPGA_FABRIC_FIC1)   // 1bit x 1
+#define CONFGFEC                 (0x5303 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDExecALTRO          (0x5304 | BASE_FPGA_FABRIC_FIC1)   // 1bit x 1
+#define V2_CMDAbortALTRO         (0x5305 | BASE_FPGA_FABRIC_FIC1)   // 1bit x 1
+#define V2_CMDSwTrig             (0x5306 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDResAltroErrSt      (0x5307 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDResRDRXReg         (0x5308 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDResCounters        (0x5309 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDDCSBusIRQ          (0x5310 | BASE_FPGA_FABRIC_FIC1)    // 1bit x 1
+#define V2_CMDSCLKsync           (0x530a | BASE_FPGA_FABRIC_FIC1)   // 1bit x 1
 
-#define CONFGFEC                 0x5303    // 1bit x 1
-
-#define V2_CMDExecALTRO          0x5304    // 1bit x 1
-
-#define V2_CMDAbortALTRO         0x5305    // 1bit x 1
-
-#define V2_CMDResAltroErrSt      0x5307    // 1bit x 1
-
-#define V2_CMDSCLKsync           0x530a    // 1bit x 1
 
 /*************************************
    RCU FW1 Registers and Memories
@@ -249,66 +265,67 @@ public:
 /* #define DataAssemblerDataMEM_WIDTH  32 */
 /* #define DataAssemblerDataMEM_SIZE   1024 */
 
-#define FECActiveList         0x8000
+#define FECActiveList         (0x8000 | BASE_FPGA_FABRIC_FIC0)
 #define FECActiveList_WIDTH   32
 #define FECActiveList_SIZE    1
 
-#define FECRDOList            0x8001
-#define FECRDOList_WIDTH      32
-#define FECRDOList_SIZE       1
+//#define FECRDOList            0x8001
+//#define FECRDOList_WIDTH      32
+//#define FECRDOList_SIZE       1
 
-#define FECResultREG          0x8002
+#define FECResultREG          (0x8002 | BASE_FPGA_FABRIC_FIC0) 
 #define FECResultREG_WIDTH    21
 #define FECResultREG_SIZE     1
 
-#define FECErrReg             0x8003
+#define FECErrReg             (0x8003 | BASE_FPGA_FABRIC_FIC0)
 #define FECErrReg_WIDTH       32
 #define FECErrReg_SIZE        1
+
 
 #define FECINTmode            0x510b
 #define FECINTmode_WIDTH      2
 #define FECINTmode_SIZE       1
 
-#define FECSCAddREG           0x8005
+#define FECSCAddREG           (0x8005 | BASE_FPGA_FABRIC_FIC0)
 #define FECSCAddREG_WIDTH     32
 #define FECSCAddREG_SIZE      1
 
-#define FECSCDataREG          0x8006
+#define FECSCDataREG          (0x8006 | BASE_FPGA_FABRIC_FIC0)
 #define FECSCDataREG_WIDTH    32
 #define FECSCDataREG_SIZE     1
 
 /* a few FW version from May 06 use 0x8006 as FW version register */
-#define RCUFwVersionOld       0x8006
+#define RCUFwVersionOld       (0x8001 | BASE_FPGA_FABRIC_FIC0)
 #define RCUFwVersionOld_WIDTH 24
 #define RCUFwVersionOld_SIZE  1
 
-#define RCUFwVersion          0x8008
+#define RCUFwVersion          (0x8001 | BASE_FPGA_FABRIC_FIC0)
 #define RCUFwVersion_WIDTH    24
 #define RCUFwVersion_SIZE     1
 
-#define FECSWREG              0x8009
-#define FECSWREG_WIDTH        1
-#define FECSWREG_SIZE         1
+//#define FECSWREG              0x8009
+//#define FECSWREG_WIDTH        1
+//#define FECSWREG_SIZE         1
 
-#define V2_FECSWREG           0x5107
+#define V2_FECSWREG           (0x5107 | BASE_FPGA_FABRIC_FIC1)
 #define V2_FECSWREG_WIDTH     1
 #define V2_FECSWREG_SIZE      1
 
-#define FECSCCmdREG           0x8010
+#define FECSCCmdREG           (0x8010 | BASE_FPGA_FABRIC_FIC0)
 #define FECSCCmdREG_WIDTH     32
 #define FECSCCmdREG_SIZE      1
 
 #ifdef  ENABLE_ANCIENT_05
 // Reset FEC Error Register
-#define FECResetErrReg        0x8012
+#define FECResetErrReg        (0x8012 | BASE_FPGA_FABRIC_FIC0)
 #else   // !ENABLE_ANCIENT_05
-#define FECResetErrReg        0x8011
+#define FECResetErrReg        (0x8011 | BASE_FPGA_FABRIC_FIC0)
 #endif  // ENABLE_ANCIENT_05
 #define FECResetErrReg_WIDTH  1
 #define FECResetErrReg_SIZE   1
 
 // Reset FEC Result Rregister
-#define FECResetResReg        0x8012
+#define FECResetResReg        (0x8012 | BASE_FPGA_FABRIC_FIC0)
 #define FECResetResReg_WIDTH  1
 #define FECResetResReg_SIZE   1
 
@@ -513,35 +530,35 @@ public:
 #define TTCEventError_WIDTH     25
 #define TTCEventError_SIZE      1
 
-#define TTCL1MsgHeader	        0x4030
+#define TTCL1MsgHeader	        (0x4030 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgHeader_WIDTH    12
 #define TTCL1MsgHeader_SIZE     1
 
-#define TTCL1MsgData	        0x4031
+#define TTCL1MsgData	        (0x4031 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL1MsgData_WIDTH      12
 #define TTCL1MsgData_SIZE       1
 
-#define TTCL2aMsgHeader 	0x4035
+#define TTCL2aMsgHeader 	(0x4035 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aMsgHeader_WIDTH   12
 #define TTCL2aMsgHeader_SIZE    1
 
-#define TTCL2aMsgData	        0x4036
+#define TTCL2aMsgData	        (0x4036 | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2aMsgData_WIDTH     12
 #define TTCL2aMsgData_SIZE      1
 
-#define TTCL2rMsgHeader	        0x403D
+#define TTCL2rMsgHeader	        (0x403D | BASE_FPGA_FABRIC_FIC1)
 #define TTCL2rMsgHeader_WIDTH   12
 #define TTCL2rMsgHeader_SIZE    1
 
-#define TTCRoIMsgHeader	        0x403E
+#define TTCRoIMsgHeader	        (0x403E | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoIMsgHeader_WIDTH   12
 #define TTCRoIMsgHeader_SIZE    1
 
-#define TTCRoIMsgData	        0x403F
+#define TTCRoIMsgData	        (0x403F | BASE_FPGA_FABRIC_FIC1)
 #define TTCRoIMsgData_WIDTH     12
 #define TTCRoIMsgData_SIZE      1
 
-#define TTCFIFODAQHeader	0x4081
+#define TTCFIFODAQHeader	(0x4081 | BASE_FPGA_FABRIC_FIC1)
 #define TTCFIFODAQHeader_WIDTH  32
 #define TTCFIFODAQHeader_SIZE   1
 

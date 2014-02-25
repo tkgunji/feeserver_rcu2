@@ -40,7 +40,8 @@ int ce_issue(char* command, char** result, int* size){
   int inSize=*size;
   *size=Ctr::rb.size()*4;
   *result=(char*)&(CEIssueHandler::rb[0]);
-  CE_Event("Finished executing command block of size %i, of which %i were processed with return block size %i\n", inSize, processed, *size);
+  CE_Event("Finished executing command block of size %i, of which %i were processed with return block size %i 0x%x\n", inSize, processed, 
+	   *size, CEIssueHandler::rb[0]);
   return processed;
 }
 
@@ -55,7 +56,8 @@ int CEIssueHandler::Issue(const char* command, int size, std::vector<uint32_t>& 
     CE_Debug("Executing command block of size %i for high level fee command\n",size);
     int processed=IssueFee(commandString, rb);
     if(processed==0) return 0;
-    return processed+Issue(command+processed, size-processed, rb);
+    int nret = processed+Issue(command+processed, size-processed, rb);
+    return nret; 
   }
   if(command[0]=='<' && command[1]=='a'){
     std::string commandString=std::string(command,size);

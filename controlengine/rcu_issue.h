@@ -1294,6 +1294,17 @@
 
 /****************************************************************************************/
 
+/**                                                                                                                        
+ * commandset RCU2                                                                                              
+ * @ingroup rcu_issue                                                                                                           
+ */
+#define FEESVR_CMD_RCU2_2               (0x05000000 | FEESERVER_CMD)
+#define EXAMPLE_COMMAND_1               (0x020000 | FEESVR_CMD_RCU2_2)
+#define RCU_READ_STATUS_REG             (0x030000 | FEESVR_CMD_RCU2_2)
+#define RCU_WRITE_TO_REG                (0x040000 | FEESVR_CMD_RCU2_2)
+
+
+
 
 /**
  * commandset UNUSED 6.
@@ -1505,6 +1516,9 @@
 #define LASER_WRITE_MAXNUMBEROFFLASHEVENTS (0x300000 | FEESVR_CMD_LASER)
 #define LASER_WRITE_NUMBEROFEVENTSINBURST  (0x310000 | FEESVR_CMD_LASER)
 #define LASER_WRITE_ENABLES                (0x320000 | FEESVR_CMD_LASER)
+
+#define LASER_READ_REG                     (0x400000 | FEESVR_CMD_LASER)
+
 
 /****************************************************************************************/
 
