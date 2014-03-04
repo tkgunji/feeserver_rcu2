@@ -56,7 +56,8 @@ To access the registers in feeserver/CE, one needs to install the driver for RCU
 Compiation of my privat driver for RCU2:
 $ git clone git://github.com/tkgunji/rcu2linuxtest.git
 $ cd rcu2linuxtest/rculinux-2.0/build/
-(you need to set envrionment variables 
+(you need to set envrionment variables like INSTALL_ROOT)
+$ ../configure CC=arm-uclinuxeabi-gcc --host=arm-uclinuxeabi
 $ make (please read [4-1]. you need to set some enviromnent variables before make.)
 $ ls drivers/*ko
 drivers/sample.ko    --> this is for testing 
