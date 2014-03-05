@@ -22,6 +22,7 @@ void print_err(){
 int main(int argc, char **argv)
 {
 
+    cout<<"feeserver main program argc:"<<argc<<endl;
     string name ; 
 
     if(argc==1){
