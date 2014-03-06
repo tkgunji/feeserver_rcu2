@@ -229,12 +229,13 @@ int DevRcu2::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"_VERSION", V2_RCU_Version, 1, 0, fpMsgbuffer));  
   //list of services inherited from rcu  
   fServices.push_back(new SerMbAddrS(name+"_AFL"          , V2_FECActiveList_RO  , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_FECERR_AI"     , V2_FECErrAI_RO     , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_FECERR_AO"     , V2_FECErrAO_RO     , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_FECERR_BI"     , V2_FECErrBI_RO     , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_FECERR_BO"     , V2_FECErrBO_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_AI"     , V2_FECErrAI_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_AO"     , V2_FECErrAO_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_BI"     , V2_FECErrBI_RO     , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_FECERR_BO"     , V2_FECErrBO_RO     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"_FWVERSION"    , RCUFwVersion      , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS"   , FECErrReg         , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS"   , FECResultREG         , 1, 0, fpMsgbuffer));
+  
 
   ////////////////////////////
 

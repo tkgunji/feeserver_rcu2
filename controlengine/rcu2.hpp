@@ -151,21 +151,37 @@ public:
 //#define V2_FECErrB_RO_WIDTH      32
 //#define V2_FECErrB_RO_SIZE       1
 
-#define V2_FECErrAI_RO            (0x8006 | BASE_FPGA_FABRIC_FIC0)
-#define V2_FECErrAI_RO_WIDTH      21     
+#define V2_FECErrAI_RO            (0x800A | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrAI_RO_WIDTH      20     
 #define V2_FECErrAI_RO_SIZE       1       
 
-#define V2_FECErrAO_RO            (0x8007 | BASE_FPGA_FABRIC_FIC0)
-#define V2_FECErrAO_RO_WIDTH      21     
+#define V2_FECErrAO_RO            (0x800B | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrAO_RO_WIDTH      20     
 #define V2_FECErrAO_RO_SIZE       1       
 
-#define V2_FECErrBI_RO            (0x8008 | BASE_FPGA_FABRIC_FIC0)
-#define V2_FECErrBI_RO_WIDTH      21     
+#define V2_FECErrBI_RO            (0x800C | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrBI_RO_WIDTH      20     
 #define V2_FECErrBI_RO_SIZE       1       
 
-#define V2_FECErrBO_RO            (0x8009 | BASE_FPGA_FABRIC_FIC0)
-#define V2_FECErrBO_RO_WIDTH      21     
+#define V2_FECErrBO_RO            (0x800D | BASE_FPGA_FABRIC_FIC0)
+#define V2_FECErrBO_RO_WIDTH      20     
 #define V2_FECErrBO_RO_SIZE       1       
+
+#define V2_SLC_Result_AI          (0x8011 | BASE_FPGA_FABRIC_FIC0)
+#define V2_SLC_Result_AI_WIDTH    21     
+#define V2_SLC_Result_AI_SIZE     1       
+
+#define V2_SLC_Result_AO          (0x8012 | BASE_FPGA_FABRIC_FIC0)
+#define V2_SLC_Result_AO_WIDTH    21     
+#define V2_SLC_Result_AO_SIZE     1       
+
+#define V2_SLC_Result_BI          (0x8013 | BASE_FPGA_FABRIC_FIC0)
+#define V2_SLC_Result_BI_WIDTH    21     
+#define V2_SLC_Result_BI_SIZE     1       
+
+#define V2_SLC_Result_BO          (0x8014 | BASE_FPGA_FABRIC_FIC0)
+#define V2_SLC_Result_BO_WIDTH    21     
+#define V2_SLC_Result_BO_SIZE     1       
 
 
 #define V2_AltroIf               (0x5101 | BASE_FPGA_FABRIC_FIC1)
