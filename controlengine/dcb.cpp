@@ -103,3 +103,9 @@ int DevMsgbufferDcb::DriverReload(){
   DriverLoad();
   return 1;
 }
+int DevMsgbufferDcb::SingleI2CRead(uint32_t base, uint32_t address, uint32_t *pData, uint32_t mode){
+  return 1;
+}
+int DevMsgbufferDcb::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode){
+  return 1;
+}

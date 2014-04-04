@@ -20,6 +20,13 @@ int DevMsgbufferDummy::SingleRead(uint32_t address, uint32_t* pData, uint32_t mo
   if (pData && address<fMemory.size()) *pData=fMemory[address];
   return 1;
 }
+int DevMsgbufferDummy::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode){
+  return 1;
+}
+int DevMsgbufferDummy::SingleI2CRead(uint32_t base, uint32_t address, uint32_t* pData, uint32_t mode){
+  return 1;
+}
+
 int DevMsgbufferDummy::MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize, uint32_t mode){
   int i=0;
   for(i=0;i<iSize;i++) if(address<fMemory.size()) fMemory[address+i]=pData[i];

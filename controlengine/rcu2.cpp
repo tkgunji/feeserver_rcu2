@@ -7,6 +7,7 @@
 #include "rcu_issue.h"
 #include "ser.hpp"
 #include "dcscMsgBufferInterface.h"
+#include "i2c-dev.h"
 
 /******************************************************************************/
 
@@ -25,7 +26,7 @@ CtrRcu2::CtrRcu2():fpRcu2(NULL){
   if(fpMsgbuffer) CE_Event("DevMsgbuffer of type '%s' created at %p with HwType %i\n", typeid(*fpMsgbuffer).name(), fpMsgbuffer, fHwType);
   else CE_Warning("DevMsgbuffer not created at %p with HwType %i\n", fpMsgbuffer, fHwType);
 
-  if(!fpRcu2 && fpMsgbuffer) fpRcu2=new DevRcu2(subDevices.size(), this, fpMsgbuffer);
+  if(!fpRcu2 && fpMsgbuffer) fpRcu2=new DevRcu2(subDevices.size(), this,  fpMsgbuffer);
   if(fpRcu2){
     AddSubDevice(fpRcu2);
     CE_Event("DevRcu2 '%s' (%i) of type '%s' created at %p with DevMsgbuffer at %p\n", fpRcu2->GetName().c_str(), fpRcu2->GetDeviceId(), typeid(*fpRcu2).name(), fpRcu2, fpMsgbuffer);
@@ -218,6 +219,195 @@ int DevRcu2::Rcu2RadMonRead(Ser::TceServiceData* pData, int32_t adc, int32_t unu
   return nRet;
 }
 
+
+int DevRcu2::Rcu2I2CTempRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=1;
+  float newValue=0;
+  uint32_t tmp=1;
+  /*
+
+  //nRet |= rcu2->fpMsgbuffer->SingleI2CRead(0x40, &rawValue, 0);
+  ///// routine 
+  ///// start sampling 
+  nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0xe5,1);
+  ////  getting data 
+  rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x03, &tmp,1);
+  printf("aaaaaa 0x%x\n", rawValue);
+  newValue = 1.0*(((rawValue>>8) + (rawValue<<8)&0x00ffff));
+  */
+  
+  rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x03, &tmp,1);
+  printf("aaaaaa 0x%x\n", rawValue);
+  newValue = rawValue;
+  newValue = -46.85 + 175.72*newValue/65536.0;
+
+  if(nRet>=0) pData->fVal=newValue;
+  else pData->fVal=nRet;
+  return nRet;
+}
+
+int DevRcu2::Rcu2I2CRHRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=1;
+  float newValue=0;
+  uint32_t tmp=1;
+
+  /*
+  //nRet |= rcu2->fpMsgbuffer->SingleI2CRead(0x40, &rawValue, 0);
+  ///// routine 
+  ///// start sampling 
+  nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0xe5,1);
+  ////  getting data 
+  rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x05, &tmp,1);
+  printf("aaaaaa 0x%x\n", rawValue);
+  newValue = 1.0*(((rawValue>>8) + (rawValue<<8)&0x00ffff));
+  newValue = -6 + 125.0*newValue/65536.0;
+  */
+
+  rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x05, &tmp,2);
+  printf("aaaaaa 0x%x\n", rawValue);
+  newValue = rawValue;
+  newValue = -6 + 125.0*newValue/65536.0;
+
+  if(nRet>=0) pData->fVal=newValue;
+  else pData->fVal=nRet;
+  return nRet;
+}
+
+///pressure sensor 
+int DevRcu2::Rcu2I2CPreRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  if(!parameter) return -1;
+  DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=1;
+  float newValue=0;
+  uint32_t tmp=1;
+  float padc = 0;
+  float tadc = 0;
+  float a0 = 0.0;
+  float b1 = 0.0;
+  float b2 = 0.0;
+  float c12 = 0.0;
+  float pcomp=0.0;
+  float pressure = 0.0;
+  uint32_t res = 0; 
+  uint32_t new_res = 0;
+  int sign = 0;
+
+  /// routine 
+  /// start sampling for pressure 
+  nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x60, 0x12, 0x1,1);
+  sleep(0.5);
+  /// read padc
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x00, &tmp, 1);
+  padc = 1.0*(((res>>8) + (res<<8)&0x00ffff)) / 64;
+  CE_Debug("padc = %f\n",padc);
+
+  /// read tadc
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x02, &tmp, 1);
+  tadc = 1.0*(((res>>8) + (res<<8)&0x00ffff)) / 64;
+  CE_Debug("tadc = %f\n",tadc);
+
+  /// read a0
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x04, &tmp, 1);
+  new_res = (((res>>8) + (res<<8)&0x00ffff));
+  sign = (new_res & 0x8000 ) >> 15;
+  a0 = (new_res & 0x7ff8 ) >> 3;
+  a0 += ( ((new_res & 0x4) >>2) / 2.0 + 
+	  ((new_res & 0x2) >>1) / 4.0 + 
+	  ((new_res & 0x1)) / 8.0 );
+  a0 = (1-2*sign)*a0;
+  CE_Debug("a0 = %f\n",a0);
+
+  //// read a1
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x06, &tmp, 1);
+  new_res = (((res>>8) + (res<<8)&0x00ffff));
+  /////////////
+  sign = (new_res & 0x8000 ) >> 15;
+  new_res = ~new_res;
+  new_res += 1;
+  b1 = (new_res & 0x6000 ) >> 13;
+  b1 += ( ((new_res & 0x1000) >>12) / 2.0 + 
+	  ((new_res & 0x0800) >>11) / 4.0 + 
+	  ((new_res & 0x0400) >>10) / 8.0 + 
+	  ((new_res & 0x0200) >> 9) / 16.0 + 
+	  ((new_res & 0x0100) >> 8) / 32.0 + 
+	  ((new_res & 0x0080) >> 7) / 64.0 + 
+	  ((new_res & 0x0040) >> 6) / 128.0 + 
+	  ((new_res & 0x0020) >> 5) / 256.0 + 
+	  ((new_res & 0x0010) >> 4) / 512.0 + 
+	  ((new_res & 0x0008) >> 3) / 1024.0 + 
+	  ((new_res & 0x0004) >> 2) / 2048.0 + 
+	  ((new_res & 0x0002) >> 1) / 4096.0 + 
+	  ((new_res & 0x0001)  ) / 8192.0); 
+  b1 = (1-2*sign)*b1;
+  CE_Debug("b1 = %f\n",b1);
+
+  ///// read b2
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x08, &tmp, 1);
+  new_res = (((res>>8) + (res<<8)&0x00ffff));
+  sign = (new_res & 0x8000 ) >> 15;
+  new_res = ~new_res;
+  new_res += 1;
+  b2 = (new_res & 0x4000 ) >> 14;
+  b2 += (
+	 ((new_res & 0x2000) >>13) / 2.0 + 
+	 ((new_res & 0x1000) >>12) / 4.0 + 
+	 ((new_res & 0x0800) >>11) / 8.0 + 
+	 ((new_res & 0x0400) >>10) / 16.0 + 
+	 ((new_res & 0x0200) >> 9) / 32.0 + 
+	 ((new_res & 0x0100) >> 8) / 64.0 + 
+	 ((new_res & 0x0080) >> 7) / 128.0 + 
+	 ((new_res & 0x0040) >> 6) / 256.0 + 
+	 ((new_res & 0x0020) >> 5) / 512.0 + 
+	 ((new_res & 0x0010) >> 4) / 1024.0 + 
+	 ((new_res & 0x0008) >> 3) / 2048.0 + 
+	 ((new_res & 0x0004) >> 2) / 4096.0 + 
+	 ((new_res & 0x0002) >> 1) / 8192.0 + 
+	 ((new_res & 0x0001)  ) / 16384.0); 
+  b2 = (1-2*sign)*b2;
+  CE_Debug("b2 = %f\n",b2);
+
+  ////// read c12
+  res =  rcu2->fpMsgbuffer->SingleI2CRead(0x60, 0x0a, &tmp, 1);
+  new_res = (((res>>8) + (res<<8)&0x00ffff));
+  /////////////
+  sign = (new_res & 0x8000 ) >> 15;
+  new_res = new_res >> 2;
+  /////////////
+  c12 = (
+	 ((new_res & 0x1000) >>12) / 1024.0 + 
+	 ((new_res & 0x0800) >>11) / 2048.0 + 
+	 ((new_res & 0x0400) >>10) / 4096.0 + 
+	 ((new_res & 0x0200) >> 9) / 8192.0 + 
+	 ((new_res & 0x0100) >> 8) / 16384.0 + 
+	 ((new_res & 0x0080) >> 7) / 32768.0 + 
+	 ((new_res & 0x0040) >> 6) / 65536.0 +  
+	 ((new_res & 0x0020) >> 5) / 131072.0 + 
+	 ((new_res & 0x0010) >> 4) / 262144.0 +  
+	 ((new_res & 0x0008) >> 3) / 524288.0 + 
+	 ((new_res & 0x0004) >> 2) / 1048576.0 + 
+	 ((new_res & 0x0002) >> 1) / 2097152.0 + 
+	 ((new_res & 0x0001)  ) /  4194304);
+  c12 = (1-2*sign)*c12;
+  CE_Debug("c12 = %f\n",c12);
+
+  pcomp = a0 + (b1+c12*tadc)*padc+b2*tadc;
+  pressure = pcomp*(115.0-50.0)/1023.0+50;
+
+
+  
+
+  if(nRet>=0) pData->fVal=pressure;
+  else pData->fVal=nRet;
+  return nRet;
+}
+
 int DevRcu2::ArmorLocal(){
   //Will be executed at start of FeeServer
 
@@ -234,8 +424,17 @@ int DevRcu2::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"_FECERR_BI"     , V2_FECErrBI_RO     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"_FECERR_BO"     , V2_FECErrBO_RO     , 1, 0, fpMsgbuffer));
   fServices.push_back(new SerMbAddrS(name+"_FWVERSION"    , RCUFwVersion      , 1, 0, fpMsgbuffer));
-  fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS"   , FECResultREG         , 1, 0, fpMsgbuffer));
+  fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS_V2"   , FECResultREG         , 1, 0, fpMsgbuffer));
   
+
+  name=GetName()+"_TEMP";
+  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, DevRcu2::Rcu2I2CTempRead, 0, 0, 0, this);
+  name=GetName()+"_RH";
+  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, DevRcu2::Rcu2I2CRHRead, 0, 0, 0, this);
+  //name=GetName()+"_Pressure";
+  //Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.5, DevRcu2::Rcu2I2CPreRead, 0, 0, 0, this);
+
+
 
   ////////////////////////////
 
@@ -688,4 +887,17 @@ int DevMsgbufferRcu2::FlashErase(int startSec, int stopSec){
   return stopSec-startSec; 
 }
 
+int DevMsgbufferRcu2::SingleI2CRead(uint32_t base, uint32_t address, uint32_t* pData, uint32_t mode){
+  CE_Debug("access to the i2c register 0x%x for reading\n", address);
+  int data = 0;
+  data = Rcu2SingleI2CRead(base, address, mode, pData);
+  CE_Debug("reading out from the i2c register 0x%x : data = 0x%x (0x%x)\n", address, pData, data);
+  return data;
+}
+
+
+int DevMsgbufferRcu2::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode){
+  CE_Debug("access to the i2c register 0x%x for writing 0x%x\n", address, pData);
+  return Rcu2SingleI2CWrite(base, address, 1, pData);
+}
 

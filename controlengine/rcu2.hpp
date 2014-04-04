@@ -16,6 +16,24 @@
 
 /******************************************************************************/
 
+class DevMsgbufferRcu2: public DevMsgbuffer {
+public:
+  DevMsgbufferRcu2();
+  virtual ~DevMsgbufferRcu2();
+  virtual int SingleWrite(uint32_t address, uint32_t data, uint32_t mode=1);
+  virtual int SingleRead(uint32_t address, uint32_t* pData, uint32_t mode=1);
+  virtual int SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode=1);
+  virtual int SingleI2CRead(uint32_t base, uint32_t address, uint32_t* pData, uint32_t mode=1);
+  virtual int MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize=4, uint32_t mode=1);
+  virtual int MultipleRead(uint32_t address, int iSize,uint32_t* pData, uint32_t mode=1);
+  virtual int FlashErase(int startSec, int stopSec);
+  virtual int DriverReload();
+  virtual int DriverUnload();
+  virtual int DriverLoad();
+};
+
+
+
 class DevRcu2: public Dev{
 public:
   DevRcu2(int id,  CEStateMachine* pParent, DevMsgbuffer* msgbuffer);
@@ -27,6 +45,9 @@ public:
   static  int Rcu2AdcRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
   virtual int Rcu2RadMonConf(uint32_t adc);
   static  int Rcu2RadMonRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static  int Rcu2I2CTempRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static  int Rcu2I2CRHRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
+  static  int Rcu2I2CPreRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter);
 
 protected:
   virtual int ArmorLocal();
@@ -66,20 +87,6 @@ public:
 };
 
 /******************************************************************************/
-
-class DevMsgbufferRcu2: public DevMsgbuffer {
-public:
-  DevMsgbufferRcu2();
-  virtual ~DevMsgbufferRcu2();
-  virtual int SingleWrite(uint32_t address, uint32_t data, uint32_t mode=1);
-  virtual int SingleRead(uint32_t address, uint32_t* pData, uint32_t mode=1);
-  virtual int MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize=4, uint32_t mode=1);
-  virtual int MultipleRead(uint32_t address, int iSize,uint32_t* pData, uint32_t mode=1);
-  virtual int FlashErase(int startSec, int stopSec);
-  virtual int DriverReload();
-  virtual int DriverUnload();
-  virtual int DriverLoad();
-};
 
 
 /*************************************                                                                
