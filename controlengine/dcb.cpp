@@ -90,7 +90,7 @@ int DevMsgbufferDcb::DriverUnload(){
   return 1;
 }
 int DevMsgbufferDcb::DriverLoad(){
-  if(initRcuAccess(NULL)<0){
+  if(initRcuAccess(NULL, NULL)<0){
     CE_Error("initRcuAccess finished with error code\n");
    }
 //  if(initSmAccess(NULL)<0){

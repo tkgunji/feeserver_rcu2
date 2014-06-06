@@ -32,6 +32,8 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <cerrno>
+#include "i2c-dev.h"
+
 
 // format and location of firmware versions
 // introduced May 2005, RCU4 card
@@ -217,6 +219,10 @@ enum {
 /* #define PRINT_CTRL_REGISTER_CTR_STRING    "print control register" */
 int g_options=DBG_DEFAULT;
 
+//i2c device stuff 
+const char* g_pDeviceI2CName="/dev/i2c-0";
+static int g_fileI2C=-1; // file descriptor for the I2C device      
+
 // default device name, used if the device parameter of the initRcuAccess function is NULL
 #ifndef DCSC_TEST
 //const char* g_pDeviceName="/dev/rcu/msgbuf";
@@ -391,6 +397,7 @@ void printBufferHexFormatted(unsigned char *pBuffer, int iBufferSize, int iWordS
  */
 
 // forward declarations
+int closeI2CDevice();
 int closeDevice();
 int writeDcscRegister(int regNo, unsigned char data);
 int readDcscRegister(int regNo, int bAlert);
@@ -524,6 +531,31 @@ int openDevice(const char* pDeviceName)
   return iResult;
 }
 
+//// openI2C device 
+int openI2CDevice(const char* pDeviceName){
+
+  int iResult=0;
+  const char* pDevice;
+
+  // open default or specified device 
+  if (pDeviceName)
+    pDevice=pDeviceName;
+  else
+    pDevice= g_pDeviceI2CName;
+  int flags=O_RDWR;
+  int mode=0;
+
+  g_fileI2C=open(pDevice,flags);
+
+  if (g_fileI2C<0){
+    fprintf(stderr, "Error: Could not open file \n");
+    closeI2CDevice();
+    iResult=-ENOENT;       
+  }
+  return iResult;
+}
+
+
 /* internal clean up function
  * closes the device
  * called by releaseRcuAccess
@@ -551,18 +583,32 @@ int closeDevice()
   return iResult;
 }
 
+/// close i2c device 
+int closeI2CDevice()
+{
+  int iResult=0;
+  if (g_fileI2C>0) {
+    int file=g_fileI2C;
+    g_fileI2C=-1;
+    close(file);
+  } else{
+    iResult=-ENXIO;
+  }
+  return iResult;      
+}
+
 /*
  * interface method, see dcscMsgBufferInterface.h for details
  * kept for backward compatibility
  */
-int initRcuAccess(const char* pDeviceName) {
-  return initRcuAccessExt(pDeviceName, NULL);
+int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName) {
+  return initRcuAccessExt(pDeviceName, pDeviceI2CName, NULL);
 }
 
 /*
  * interface method, see dcscMsgBufferInterface.h for details
  */
-int initRcuAccessExt(const char* pDeviceName, TdcscInitArguments* pArg)
+int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName, TdcscInitArguments* pArg)
 {
   int iResult=0;
 /*   if (g_fp) { */
@@ -586,7 +632,9 @@ int initRcuAccessExt(const char* pDeviceName, TdcscInitArguments* pArg)
       }
     }
   }
-  iResult=openDevice(pDeviceName);
+  iResult=openDevice(pDeviceName); //usually this is NULL
+  iResult=openI2CDevice(pDeviceI2CName); 
+
 /*   } */
   return iResult;
 }
@@ -598,6 +646,7 @@ int releaseRcuAccess()
 {
   int iResult=0;
   iResult=closeDevice();
+  iResult=closeI2CDevice();
   return iResult;
 }
 
@@ -1563,6 +1612,33 @@ int Rcu2MultipleWrite(uint32_t address, int size, uint32_t *pData)
 }
 
 
+/*  intergace to write i2c device 
+
+*/
+int Rcu2SingleI2CWrite(uint32_t base, uint32_t address, uint32_t mode, uint32_t pData){
+
+  int iResult=0;
+
+  //////////////////////////////
+  if (g_fileI2C) {
+    if(ioctl(g_fileI2C, I2C_SLAVE, base) < 0){
+      fprintf(stderr, "Error : ioctl I2C_SLAVE failed\n ");
+      iResult=-EBADF;
+    }
+  }else{
+    iResult=-EBADF;
+  }
+
+  iResult = i2c_smbus_write_byte_data(g_fileI2C, address, pData);
+  
+  return iResult;
+  
+}
+
+
+
+
+
 /* interface method function, refer to dcscMsgBufferInterface.h for details
  * 
  */
@@ -1607,6 +1683,32 @@ int Rcu2MultipleRead(uint32_t address, int size, uint32_t* pData)
   }
   return iResult;
 }
+
+
+/* interface to read i2c device
+
+ */
+int Rcu2SingleI2CRead(uint32_t base, uint32_t address, uint32_t mode, uint32_t* pData){
+
+  int iResult=0;
+
+  //openI2CDevice(NULL);
+
+  //////////////////////////////
+  if (g_fileI2C) {
+    if(ioctl(g_fileI2C, I2C_SLAVE, base) < 0){
+      fprintf(stderr, "Error : ioctl I2C_SLAVE failed\n ");
+      iResult=-EBADF;
+    }
+  }else{
+    iResult=-EBADF;
+  }
+  iResult = i2c_smbus_read_word_data(g_fileI2C, address);
+  //fprintf(stderr, "Rcu2SingleI2CRead :: 0x%x, 0x%x, 0x%x\n ", base, address, iResult);  
+  return iResult;
+  
+}
+
 
 /* interface method function, refer to dcscMsgBufferInterface.h for details
  * 

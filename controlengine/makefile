@@ -26,6 +26,7 @@ ifeq ($(ARCH),arm)
 EXECUTABLE=libCommandCoderTpc2.a libCommandCoderCpulser.a libCommandCoderGpulser.a libCommandCoderLaser.a
 CXX=arm-uclinuxeabi-g++
 EXTRAFLAGS=
+#CFLAGS=-c -I../dim $(EXTRAFLAGS) -I${INSTALL_ROOT}/linux/include -g -O2 -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 CFLAGS=-c -I../dim $(EXTRAFLAGS) -g -O2 -mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread
 LDFLAGS=-mcpu=cortex-m3 -mthumb -L${INSTALL_ROOT}/A2F/root/usr/lib -pthread ../libdim.a
 LD=arm-uclinuxeabi-ar cru
