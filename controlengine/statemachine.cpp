@@ -1,3 +1,4 @@
+
 #include <cerrno>
 #include <cmath>
 #include <vector>
@@ -59,8 +60,34 @@ int CEStateMachine::ReSynchronize(){
   if(fState==kStateError) state=kStateError;
   std::vector<CEStateMachine*>::iterator it;
   for(it=subDevices.begin();it<subDevices.end();it++){
-    if((*it)->ReSynchronize()==kStateError) state=kStateError;
+
+
+    CE_Debug("CEStateMachine::ReSynchronize() main : %s-%s : %s-%s\n", GetName().c_str(), GetStateName(fState), (*it)->GetName().c_str(), GetStateName((*it)->ReSynchronize()));
+
+    if((*it)->ReSynchronize()==kStateError){
+      state=kStateError;
+      break;
+    }
+    /*
+    else if((*it)->GetName()=="RCU2" && 
+	     (*it)->ReSynchronize()==kStateRunning){
+      state=kStateRunning;
+    }else if((*it)->GetName()=="RCU2" && 
+	     (*it)->ReSynchronize()==kStateStandby){
+      state=kStateStandby;
+    }else if((*it)->GetName()=="RCU2" && 
+	     (*it)->ReSynchronize()==kStateIdle){
+      state=kStateIdle;
+    }
+    */
+
+    ///align with the RCU2 status 
+    if((*it)->GetName()=="RCU2"){
+      state = (*it)->ReSynchronize();
+    }
   }
+
+
   if(state!=fState){
     CE_Debug("Device '%s' (%i) changed from state '%s' (%i) to state '%s' (%i)\n", GetName().c_str(), GetDeviceId(), GetStateName(fState), fState, GetStateName(state), state);
     ChangeState(state);

@@ -59,7 +59,7 @@ int main(int argc, char** arg){
       std::cerr << "Error: could not communicate with FeeServer " << arg[i] << std::endl;
     }
     else{
-      std::cout<<"results of the executation"<<std::endl;
+      std::cout<<"results of the executation : size = "<<sizeCopy<<std::endl;
       if(bufferCopy[0]!=NULL){
 	std::cout<<std::hex<<"0x"<<bufferCopy[0]<<std::endl;
       }

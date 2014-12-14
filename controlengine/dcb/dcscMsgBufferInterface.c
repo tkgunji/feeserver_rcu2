@@ -32,7 +32,8 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <cerrno>
-#include "i2c-dev.h"
+//#include "i2c-dev.h"
+#include "i2c.h"
 
 
 // format and location of firmware versions
@@ -219,9 +220,20 @@ enum {
 /* #define PRINT_CTRL_REGISTER_CTR_STRING    "print control register" */
 int g_options=DBG_DEFAULT;
 
+
+//radmon device stuff 
+const char* g_pDeviceRadmonName="/dev/radmon";
+static FILE *g_file_Radmon=NULL; // file descriptor for the Radmon device      
+
+
 //i2c device stuff 
-const char* g_pDeviceI2CName="/dev/i2c-0";
-static int g_fileI2C=-1; // file descriptor for the I2C device      
+//const char* g_pDeviceI2CName="/dev/i2c-0";
+const char* g_pDeviceI2CName[2]={
+  "/sys/class/i2c-adapter/i2c-0/0-0040/temperature",
+  "/sys/class/i2c-adapter/i2c-0/0-0040/humidity"
+};
+
+static int g_fileI2C[2]={-1,-1}; // file descriptor for the I2C device      
 
 // default device name, used if the device parameter of the initRcuAccess function is NULL
 #ifndef DCSC_TEST
@@ -230,8 +242,6 @@ const char* g_pDeviceName="/dev/sample2";
 #else //DCSC_TEST
 const char* g_pDeviceName=(Ctr::tmpDir+"/dcsc").c_str();
 #endif //DCSC_TEST
-                                                              
-
 // the global variables
 static int g_file=-1; // file descriptor for the device
 static unsigned int g_dcscFlags=0;
@@ -397,7 +407,8 @@ void printBufferHexFormatted(unsigned char *pBuffer, int iBufferSize, int iWordS
  */
 
 // forward declarations
-int closeI2CDevice();
+int closeRadmonDevice();
+int closeI2CDevice(const int addr);
 int closeDevice();
 int writeDcscRegister(int regNo, unsigned char data);
 int readDcscRegister(int regNo, int bAlert);
@@ -532,7 +543,7 @@ int openDevice(const char* pDeviceName)
 }
 
 //// openI2C device 
-int openI2CDevice(const char* pDeviceName){
+int openI2CDevice(const char* pDeviceName, const int address){
 
   int iResult=0;
   const char* pDevice;
@@ -541,15 +552,42 @@ int openI2CDevice(const char* pDeviceName){
   if (pDeviceName)
     pDevice=pDeviceName;
   else
-    pDevice= g_pDeviceI2CName;
+    pDevice= g_pDeviceI2CName[address];
+
+  //  int flags=O_RDWR;
+  int flags=O_RDONLY;
+  int mode=0;
+
+  g_fileI2C[address]=open(pDevice,flags);
+
+  if (g_fileI2C[address]<0){
+    fprintf(stderr, "Error: Could not open I2C device file : %d, %s, %s\n", address, g_pDeviceI2CName[address], pDevice);
+    closeI2CDevice(address);
+    iResult=-ENOENT;       
+  }
+
+  return iResult;
+}
+
+//// open Radmon device 
+int openRadmonDevice(const char* pDeviceName){
+
+  int iResult=0;
+  const char* pDevice;
+
+  // open default or specified device 
+  if (pDeviceName)
+    pDevice=pDeviceName;
+  else
+    pDevice= g_pDeviceRadmonName;
   int flags=O_RDWR;
   int mode=0;
 
-  g_fileI2C=open(pDevice,flags);
+  g_file_Radmon = fopen(pDevice, "wb+");
 
-  if (g_fileI2C<0){
-    fprintf(stderr, "Error: Could not open file \n");
-    closeI2CDevice();
+  if (g_file_Radmon<0){
+    fprintf(stderr, "Error: Could not open Radmon device file \n");
+    closeRadmonDevice();
     iResult=-ENOENT;       
   }
   return iResult;
@@ -584,13 +622,27 @@ int closeDevice()
 }
 
 /// close i2c device 
-int closeI2CDevice()
+int closeI2CDevice(const int address)
 {
   int iResult=0;
-  if (g_fileI2C>0) {
-    int file=g_fileI2C;
-    g_fileI2C=-1;
+  if (g_fileI2C[address]>0) {
+    int file=g_fileI2C[address];
+    g_fileI2C[address]=-1;
     close(file);
+  } else{
+    iResult=-ENXIO;
+  }
+  return iResult;      
+}
+
+/// close Radmon device 
+int closeRadmonDevice()
+{
+  int iResult=0;
+  if (g_file_Radmon>0) {
+    //FILE *file=g_file_Radmon;
+    //g_file_Radmon=-1;
+    fclose(g_file_Radmon);
   } else{
     iResult=-ENXIO;
   }
@@ -601,14 +653,14 @@ int closeI2CDevice()
  * interface method, see dcscMsgBufferInterface.h for details
  * kept for backward compatibility
  */
-int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName) {
-  return initRcuAccessExt(pDeviceName, pDeviceI2CName, NULL);
+int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName[], const char *pDeviceRadmonName) {
+  return initRcuAccessExt(pDeviceName, pDeviceI2CName, pDeviceRadmonName, NULL);
 }
 
 /*
  * interface method, see dcscMsgBufferInterface.h for details
  */
-int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName, TdcscInitArguments* pArg)
+int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName[], const char* pDeviceRadmonName, TdcscInitArguments* pArg)
 {
   int iResult=0;
 /*   if (g_fp) { */
@@ -633,7 +685,9 @@ int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName, TdcscI
     }
   }
   iResult=openDevice(pDeviceName); //usually this is NULL
-  iResult=openI2CDevice(pDeviceI2CName); 
+  //iResult=openI2CDevice(pDeviceI2CName[0],0); 
+  //iResult=openI2CDevice(pDeviceI2CName[1],1); 
+  iResult=openRadmonDevice(pDeviceRadmonName); 
 
 /*   } */
   return iResult;
@@ -646,7 +700,9 @@ int releaseRcuAccess()
 {
   int iResult=0;
   iResult=closeDevice();
-  iResult=closeI2CDevice();
+  iResult=closeI2CDevice(0);
+  iResult=closeI2CDevice(1);
+  iResult=closeRadmonDevice();
   return iResult;
 }
 
@@ -1612,7 +1668,7 @@ int Rcu2MultipleWrite(uint32_t address, int size, uint32_t *pData)
 }
 
 
-/*  intergace to write i2c device 
+/*  interface to write i2c device 
 
 */
 int Rcu2SingleI2CWrite(uint32_t base, uint32_t address, uint32_t mode, uint32_t pData){
@@ -1620,6 +1676,7 @@ int Rcu2SingleI2CWrite(uint32_t base, uint32_t address, uint32_t mode, uint32_t 
   int iResult=0;
 
   //////////////////////////////
+  /*
   if (g_fileI2C) {
     if(ioctl(g_fileI2C, I2C_SLAVE, base) < 0){
       fprintf(stderr, "Error : ioctl I2C_SLAVE failed\n ");
@@ -1628,10 +1685,40 @@ int Rcu2SingleI2CWrite(uint32_t base, uint32_t address, uint32_t mode, uint32_t 
   }else{
     iResult=-EBADF;
   }
-
   iResult = i2c_smbus_write_byte_data(g_fileI2C, address, pData);
-  
+  */
+
+
   return iResult;
+  
+}
+
+
+/*  interface to write radmon device 
+
+*/
+int Rcu2SingleRMWrite(uint8_t base, uint8_t address, uint8_t mode, uint16_t pData){
+
+  int iResult=0;
+  uint16_t value;
+  
+  //////////////////////////////
+  if (g_file_Radmon) {
+    if(fseek(g_file_Radmon, (base+address)*2, SEEK_SET) != 0){
+      fprintf(stderr, "Error : seek failed for radmon device\n ");
+      iResult=-EBADF;
+    }
+  }else{
+    iResult=-EBADF;
+  }
+
+  iResult = fwrite(&value, sizeof(value), 1, g_file_Radmon);
+  if(iResult!=1){
+    fprintf(stderr, "Error : write to register failed for radmon device\n ");
+    iResult=-EBADF;
+  }
+
+  return value;
   
 }
 
@@ -1692,9 +1779,9 @@ int Rcu2SingleI2CRead(uint32_t base, uint32_t address, uint32_t mode, uint32_t* 
 
   int iResult=0;
 
-  //openI2CDevice(NULL);
 
   //////////////////////////////
+  /*
   if (g_fileI2C) {
     if(ioctl(g_fileI2C, I2C_SLAVE, base) < 0){
       fprintf(stderr, "Error : ioctl I2C_SLAVE failed\n ");
@@ -1705,10 +1792,62 @@ int Rcu2SingleI2CRead(uint32_t base, uint32_t address, uint32_t mode, uint32_t* 
   }
   iResult = i2c_smbus_read_word_data(g_fileI2C, address);
   //fprintf(stderr, "Rcu2SingleI2CRead :: 0x%x, 0x%x, 0x%x\n ", base, address, iResult);  
-  return iResult;
-  
+  */
+
+  char res[100];
+  openI2CDevice(g_pDeviceI2CName[address], address);
+  if (g_fileI2C[address]) {  
+    read(g_fileI2C[address], res, 5);
+    iResult = atoi(res);
+  }else{
+    iResult=-EBADF; 
+  }
+  closeI2CDevice(address);
+  return iResult;  
 }
 
+int Rcu2SingleI2CReadReg(uint32_t address, uint32_t mode, uint32_t* pData){
+
+  int iResult=0;
+
+  char res[100];
+  openI2CDevice(g_pDeviceI2CName[address], address);
+  if (g_fileI2C[address]) {  
+    read(g_fileI2C[address], res, 5);
+    iResult = atoi(res);
+  }else{
+    iResult=-EBADF; 
+  }
+  closeI2CDevice(address);
+  return iResult;  
+}
+
+
+
+/* interface to read radmon device
+
+ */
+int Rcu2SingleRMRead(uint8_t base, uint8_t address, uint8_t mode, uint16_t* pData){
+
+  int iResult=0;
+  uint16_t data=0;
+  //////////////////////////////
+
+  if (g_file_Radmon) {
+    if(fseek( g_file_Radmon, (base+address) * 2, SEEK_SET )!=0){
+      fprintf(stderr, "Error : seek for radmon device failed\n ");
+      iResult=-EBADF;
+    }
+  }else{
+    iResult=-EBADF;
+  }
+  iResult = fread(pData, sizeof(pData), 1, g_file_Radmon);
+  if(iResult!=1){
+    fprintf(stderr, "Error : read from register for radmon device failed\n ");
+    iResult=-EBADF;
+  }
+  return iResult;
+}
 
 /* interface method function, refer to dcscMsgBufferInterface.h for details
  * 

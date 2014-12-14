@@ -26,6 +26,15 @@ int DevMsgbufferDummy::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t 
 int DevMsgbufferDummy::SingleI2CRead(uint32_t base, uint32_t address, uint32_t* pData, uint32_t mode){
   return 1;
 }
+int DevMsgbufferDummy::SingleI2CReadReg(uint32_t address, uint32_t* pData, uint32_t mode){
+  return 1;
+}
+int DevMsgbufferDummy::SingleRMWrite(uint8_t base, uint8_t address, uint16_t pData, uint8_t mode){
+  return 1;
+}
+int DevMsgbufferDummy::SingleRMRead(uint8_t base, uint8_t address, uint16_t* pData, uint8_t mode){
+  return 1;
+}
 
 int DevMsgbufferDummy::MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize, uint32_t mode){
   int i=0;

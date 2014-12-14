@@ -8,6 +8,9 @@
 #include "ctr.hpp"
 #include "rcu_issue.h"
 #include "issuehandler.hpp"
+#include <stdio.h>
+#include <sys/sysinfo.h>
+
 
 Ctr::message_t Ctr::message;
 Ctr::message_t Ctr::messageDim;
@@ -17,7 +20,8 @@ void* Ctr::logservice=NULL;
 void* Ctr::enservice=NULL;
 int Ctr::enableLogging=false;
 int Ctr::enableServices=false;
-int Ctr::loglevel=eCEEvent;
+//int Ctr::loglevel=eCEEvent;
+int Ctr::loglevel=eCEDebug;
 int Ctr::terminating=false;
 int Ctr::updateSleep=10;
 Ctr* Ctr::fpInstance=NULL;
@@ -50,6 +54,9 @@ int Ctr::RunCE(){
   Ser::RegisterService(Ser::eDataTypeInt, "UPDATE_TIME", 0.5, updateServiceUpdateTime, 0, 0, Ser::eDataTypeFloat, 0);
   Ser::RegisterService(Ser::eDataTypeString, "UPDATE_TIME_NAME", 0.0, updateServiceUpdateTime, 0, 0, Ser::eDataTypeString, 0);
   Ser::RegisterService(Ser::eDataTypeInt, "UPDATE_COUNTER", 0.5, updateServiceUpdateCounter, 0, 0, Ser::eDataTypeFloat, 0);
+  Ser::RegisterService(Ser::eDataTypeInt, "UPDATE_MEMORY_USAGE", 0.5, updateServiceMemoryUsage, 0, 0, Ser::eDataTypeInt, 0);
+
+
   Armor();
   Synchronize();
   enableLogging=true;
@@ -346,6 +353,26 @@ int Ctr::updateServiceUpdateCounter(Ser::TceServiceData* pData, int major, int m
   else pData->iVal++;
   return 0;
 }
+
+int Ctr::updateServiceMemoryUsage(Ser::TceServiceData* pData, int major, int minor, void* parameter){
+
+  struct sysinfo info;
+  unsigned long totalram = 0;
+  unsigned long freeram = 0;
+     
+  if( sysinfo(&info) != 0 ){
+      pData->iVal = 0;
+      return -1;
+  }
+ 
+  totalram = (info.totalram * info.mem_unit) / 1024;
+  freeram = (info.freeram * info.mem_unit ) / 1024;
+  pData->iVal = totalram - freeram;
+  return 0;
+}
+
+
+
 
 int Ctr::readStreamIntoVector(FILE* fp, int iDefaultBufferSize, std::vector<uint32_t>* pRB){
   int iResult=0;

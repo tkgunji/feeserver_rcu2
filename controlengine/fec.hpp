@@ -16,6 +16,7 @@ public:
   virtual int PreUpdateLocal();
   static int CtrRcuGO_OFF(CEStateMachine* callbackObject);
   static int CtrRcuGO_ON(CEStateMachine* callbackObject);
+  static int CtrRcuGO_IDLE(CEStateMachine* callbackObject);
 protected:
   virtual int EnterStateON();
   DevFecaccess * fpFecaccess;

@@ -1185,6 +1185,17 @@
    */
 #define RCU_TEST_ERROR                     (0x650000 | FEESVR_CMD_RCUCONF)
 
+
+/**
+ * Switch off the spectic Fec 
+ */
+#define RCU_FEC_OFF                     (0x660000 | FEESVR_CMD_RCUCONF)
+
+/**
+ * Switch on the spectic Fec 
+ */
+#define RCU_FEC_ON                     (0x670000 | FEESVR_CMD_RCUCONF)
+
 /****************************************************************************************/
 
 /**

@@ -280,6 +280,7 @@
 #define kStateNoControl_colour "FwStateAttention2"
 #define kStateDead_colour "FwDead"
 
+#define kActionGoFecOn     106
 #define kActionGoFlashStop 105
 #define kActionQuitScrubbing 104
 #define kActionGoScrubbing 103
@@ -349,6 +350,7 @@
 #define kActionElse 0
 
 //Action names
+#define kActionGoFecOn_name "GO_FEC_ON"
 #define kActionGoFlashStop_name "GO_STOP"
 #define kActionQuitScrubbing_name "QUIT_SCRUBBING"
 #define kActionGoScrubbing_name "SCRUBBING"

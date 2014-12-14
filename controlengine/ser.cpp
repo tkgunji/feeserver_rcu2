@@ -89,6 +89,7 @@ SerFecRegF::SerFecRegF(std::string name, uint32_t fec, uint32_t reg, float convf
 int SerFecRegF::Get(TceServiceData* pData){
   int nRet=0;
   uint32_t rawValue=0;
+  //CE_Debug(" ****** SerFecRegF::Get : fec=%d, address = 0x%x\n", fFec, fReg);
   nRet=fpFecaccess->ReadFecReg(rawValue, fFec, fReg);
   pData->fVal=rawValue*fConvfactor;
   if(nRet<0) pData->fVal=nRet;

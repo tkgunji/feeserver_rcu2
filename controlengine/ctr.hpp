@@ -42,6 +42,7 @@ public:
   static int updateServickActionStartTime(Ser::TceServiceData* pData, int major, int minor, void* parameter);
   static int updateServiceUpdateTime(Ser::TceServiceData* pData, int major, int minor, void* parameter);
   static int updateServiceUpdateCounter(Ser::TceServiceData* pData, int major, int minor, void* parameter);
+  static int updateServiceMemoryUsage(Ser::TceServiceData* pData, int major, int minor, void* parameter);
   enum{
     eCEAll = 0,
     eCEDebug = 2,

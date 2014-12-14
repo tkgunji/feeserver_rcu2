@@ -7,12 +7,16 @@
 #include "rcu_issue.h"
 #include "ser.hpp"
 #include "dcscMsgBufferInterface.h"
-#include "i2c-dev.h"
+//#include "i2c-dev.h"
+#include "i2c.h"
 
 /******************************************************************************/
 
 CtrRcu2::CtrRcu2():fpRcu2(NULL){
-  AddTransition(new CETransition(kActionGoStandby, kStateStandby, std::string(kActionGoStandby_name), NULL, NULL, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateIdle));
+  AddTransition(new CETransition(kActionGoOn, kStateStandby, std::string(kActionGoOn_name), NULL, NULL, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateIdle));
+  AddTransition(new CETransition(kActionGoOff, kStateStandby, std::string(kActionGoOff_name), NULL, NULL, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateStandby));
+  AddTransition(new CETransition(kActionGoFecOn, kStateStandby, std::string(kActionGoFecOn_name), CtrRcu2GO_FEC_ON, this, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateIdle));
+  AddTransition(new CETransition(kActionGoStandby, kStateStandby, std::string(kActionGoStandby_name), CtrRcu2GO_STANDBY, NULL, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateIdle));
   AddTransition(new CETransition(kActionGoIdle, kStateIdle, std::string(kActionGoIdle_name), CtrRcu2GO_IDLE, this, 5, kStateError, kStateFailure, kStateRunning, kStateDownloading, kStateStandby));
   AddTransition(new CETransition(kActionConf, kStateDownloading, std::string(kActionConf_name), NULL, NULL, 3, kStateStandby, kStateIdle, kStateRunning));
   AddTransition(new CETransition(kActionConfigureDone, kStateRunning, std::string(kActionConfigureDone_name), NULL, NULL, 1, kStateDownloading));
@@ -58,6 +62,27 @@ int CtrRcu2::CtrRcu2GO_IDLE(CEStateMachine* callbackObject){
   return 0;
 }
 
+int CtrRcu2::CtrRcu2GO_FEC_ON(CEStateMachine* callbackObject){
+  CE_Debug("CtrRcuGO_IDLE called\n");
+  if(!callbackObject){
+    CE_Error("No state machine\n");
+    return -1;
+  }
+  (dynamic_cast<CtrRcu2*>(callbackObject))->fpRcu2->SetAfl(0xffffffff);
+  return 0;
+}
+
+int CtrRcu2::CtrRcu2GO_STANDBY(CEStateMachine* callbackObject){
+  CE_Debug("CtrRcuGO_STANDBY called\n");
+  if(!callbackObject){
+    CE_Error("No state machine\n");
+    return -1;
+  }
+  //(dynamic_cast<CtrRcu2*>(callbackObject))->fpRcu2->SetAfl(0xffffffff);
+  //do nothing
+  return 0;
+}
+
 /******************************************************************************/
 
 std::string DevRcu2::imemFileName;
@@ -77,7 +102,16 @@ int DevRcu2::ReSynchronizeLocal(){
   if (!fpMsgbuffer) return kStateError;
   int current = GetCurrentState();
   if (current == kStateElse) return kStateStandby;
+
   //routine to check the status of the global registers
+  // RCU2_STATE goes to running once configuration register gets configured.
+  uint32_t data;  
+  fpMsgbuffer->SingleRead(V2_FECActiveList_RO, &data);
+  if(data == 0x0){
+    current = kStateIdle;
+  }else{
+    current = kStateStandby;
+  }
   return current;
 }
 
@@ -111,22 +145,25 @@ int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
   else if(command.find(test="RCU2_READ_FW_VERSION",0)==0){keySize=test.size();cmd=RCU_READ_FW_VERSION;}
   else if(command.find(test="RCU2_RESET",0)==0){keySize=test.size();cmd=RCU_RESET;}
   else if(command.find(test="RCU2_SYNC_SCLK_L1TTC",0)==0){keySize=test.size(); cmd=RCU_SYNC_SCLK_L1TTC;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_EXECUTE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_EXECUTE;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_CLEAR",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_CLEAR;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_WRITE_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_WRITE_FILE;}
-  else if(command.find(test="RCU2_ALTRO_INSTRUCTION_READ_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_READ_FILE;}
-  else if(command.find(test="RCU2_CONFGFEC",0)==0){keySize=test.size(); cmd=RCU_CONFGFEC;}
-  else if(command.find(test="RCU2_WRITE_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_WRITE_EN_INT_BA;}
-  else if(command.find(test="RCU2_READ_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_READ_EN_INT_BA;}
-  else if(command.find(test="REG_CFG_EXECUTE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE;}
-  else if(command.find(test="REG_CFG_EXECUTE_SINGLE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE_SINGLE;}
-  else if(command.find(test="REG_CFG_CLEAR",0)==0){keySize=test.size(); cmd=REG_CFG_CLEAR;}
-  else if(command.find(test="REG_CFG_WRITE_FILE",0)==0){keySize=test.size(); cmd=REG_CFG_WRITE_FILE;}
-  else if(command.find(test="REG_CFG_READ_FILE",0)==0){keySize=test.size();  cmd=REG_CFG_READ_FILE;}
+  //else if(command.find(test="RCU2_ALTRO_INSTRUCTION_EXECUTE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_EXECUTE;}
+  //else if(command.find(test="RCU2_ALTRO_INSTRUCTION_CLEAR",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_CLEAR;}
+  //else if(command.find(test="RCU2_ALTRO_INSTRUCTION_WRITE_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_WRITE_FILE;}
+  //else if(command.find(test="RCU2_ALTRO_INSTRUCTION_READ_FILE",0)==0){keySize=test.size(); cmd=RCU_ALTRO_INSTRUCTION_READ_FILE;}
+  //else if(command.find(test="RCU2_CONFGFEC",0)==0){keySize=test.size(); cmd=RCU_CONFGFEC;}
+  //else if(command.find(test="RCU2_WRITE_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_WRITE_EN_INT_BA;}
+  //else if(command.find(test="RCU2_READ_EN_INT_BA",0)==0){keySize=test.size(); cmd=RCU_READ_EN_INT_BA;}
+  //else if(command.find(test="REG_CFG_EXECUTE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE;}
+  //else if(command.find(test="REG_CFG_EXECUTE_SINGLE",0)==0){keySize=test.size(); cmd=REG_CFG_EXECUTE_SINGLE;}
+  //else if(command.find(test="REG_CFG_CLEAR",0)==0){keySize=test.size(); cmd=REG_CFG_CLEAR;}
+  //else if(command.find(test="REG_CFG_WRITE_FILE",0)==0){keySize=test.size(); cmd=REG_CFG_WRITE_FILE;}
+  //else if(command.find(test="REG_CFG_READ_FILE",0)==0){keySize=test.size();  cmd=REG_CFG_READ_FILE;}
   else if(command.find(test="RCU2_DRIVER_RELOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_RELOAD;}
   else if(command.find(test="RCU2_DRIVER_UNLOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_UNLOAD;}
   else if(command.find(test="RCU2_DRIVER_LOAD",0)==0){keySize=test.size(); cmd=RCU_DRIVER_LOAD;}
   else if(command.find(test="RCU2_TEST_ERROR",0)==0){keySize=test.size(); cmd=RCU_TEST_ERROR;}
+  else if(command.find(test="RCU2_FEC_OFF",0)==0){keySize=test.size(); cmd=RCU_FEC_OFF;}
+  else if(command.find(test="RCU2_FEC_ON",0)==0){keySize=test.size(); cmd=RCU_FEC_ON;}
+
   else return 0;
   
   std::string parameter="";
@@ -145,10 +182,10 @@ int DevRcu2::HighLevelHandler(const char* pCommand, std::vector<uint32_t>& rb){
 }
 
 int DevRcu2::SetAfl(uint32_t value){
-  CE_Debug("Seting AFL to value %x\n", value);
+  CE_Debug("Seting AFL to value 0x%x\n", value);
   int nRet=0;
   uint32_t afl=0x0;
-  nRet=fpMsgbuffer->SingleRead(RCU2_FECActiveList, &afl);
+  nRet=fpMsgbuffer->SingleRead(V2_FECActiveList, &afl);
   if (nRet<0){
     CE_Warning("can not read RCU AFL %#x: SingleRead failed (%d)\n", 0x8000, nRet);
     return -1;
@@ -167,7 +204,7 @@ int DevRcu2::SetAfl(uint32_t value){
       if((value&(0x1<<i))==0) afl=afl&~(0x1<<i);
       else                    afl=afl| (0x1<<i);
       CE_Debug("n=%x, i=%x, value=%x, afl=%x\n", 1, i, value, afl);
-      nRet=fpMsgbuffer->SingleWrite(0x8000, afl);
+      nRet=fpMsgbuffer->SingleWrite(V2_FECActiveList, afl);
       if (nRet<0){
         CE_Error("SingleWrite failed to write %p to RCU AFL with error %i\n", 0x8000, nRet);
         return -2;
@@ -206,20 +243,51 @@ int DevRcu2::Rcu2AdcRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused
 
 int DevRcu2::Rcu2RadMonRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
   if(!parameter) return -1;
-  DevRcu2* rcu=(DevRcu2*) parameter;
+  DevRcu2* rcu2 = (DevRcu2*) parameter;
+  uint16_t tmp=1;
+  uint8_t addr = adc & 0xff;
   int nRet=0;
-  uint32_t rawValue=0;
-  //nRet|=rcu->fpMsgbuffer->SingleWrite(0x801a,adc+0xff000000);
-  //nRet|=rcu->fpMsgbuffer->SingleRead(0x800d,&rawValue);
-  rawValue=rawValue>>6;
-  //factor=0.00390625=1/256=0.015625*0.25=1/64*1/4                     
-  //rawValue&=0xffc0;                                                                                 
-  if(nRet>=0) pData->fVal=rawValue*0.25;
+
+  nRet =  rcu2->fpMsgbuffer->SingleRMRead(0x00, addr, &tmp,1);
+  sleep(1);
+  
+  printf("RMGetValue at address 0x%x = 0x%x, return results = 0x%x\n", addr, tmp, nRet);  
+
+  pData->iVal=tmp;
+
+  return nRet;
+}
+
+///temperature sensor mounted on the starterkit
+int DevRcu2::Rcu2I2CRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
+  
+  if(!parameter) return -1;
+  DevRcu2* rcu2=(DevRcu2*) parameter;
+  int nRet=0;
+  uint32_t rawValue=1;
+  float newValue=0;
+  uint32_t tmp=1;
+
+  rawValue = rcu2->fpMsgbuffer->SingleI2CReadReg(adc, &tmp,1); 
+  newValue = rawValue;
+
+  if(adc==0x0){ //temperature reading 
+    newValue = -46.85 + 175.72*newValue/65536.0;
+    printf("Rcu2I2CTemperarture:: %f\n", newValue);  
+  }else if(adc==0x1){ //humidity reading 
+    newValue = -6 + 125.0*newValue/65536.0;
+    printf("Rcu2I2CRHumidity:: %f\n", newValue);  
+  }
+
+  if(nRet>=-1) pData->fVal=newValue;
   else pData->fVal=nRet;
   return nRet;
 }
 
 
+
+///temperature sensor mounted on the starterkit
+/*
 int DevRcu2::Rcu2I2CTempRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
   if(!parameter) return -1;
   DevRcu2* rcu2=(DevRcu2*) parameter;
@@ -228,25 +296,12 @@ int DevRcu2::Rcu2I2CTempRead(Ser::TceServiceData* pData, int32_t adc, int32_t un
   float newValue=0;
   uint32_t tmp=1;
 
-
-  //nRet |= rcu2->fpMsgbuffer->SingleI2CRead(0x40, &rawValue, 0);
-  ///// routine 
-  ///// start sampling 
-  nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0x3e,1);
-  //rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0x3e,1);
-  ////  getting data 
-  sleep(1);
+  //nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0x3e,1);
+  //sleep(1);
   rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x03, &tmp,1);
-  //printf("Rcu2I2CTempRead:: 0x%x %d\n", rawValue, nRet);
-  newValue = 1.0*(((rawValue>>8) + (rawValue<<8)&0x00ffff));
-  //newValue = rawValue;
+  newValue = rawValue;
+  //newValue = 1.0*(((rawValue>>8) + (rawValue<<8)&0x00ffff)); //this correction is needed for /dev/i2c-0 reading 
   newValue = -46.85 + 175.72*newValue/65536.0;
-
-
-  //rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x03, &tmp,1);
-  //printf("aaaaaa 0x%x\n", rawValue);
-  //newValue = rawValue;
-  //newValue = -46.85 + 175.72*newValue/65536.0;
 
   printf("Rcu2I2CTemperarture:: %f\n", newValue);  
 
@@ -255,6 +310,7 @@ int DevRcu2::Rcu2I2CTempRead(Ser::TceServiceData* pData, int32_t adc, int32_t un
   return nRet;
 }
 
+///humidity sensor mounted on the starterkit
 int DevRcu2::Rcu2I2CRHRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
   if(!parameter) return -1;
   DevRcu2* rcu2=(DevRcu2*) parameter;
@@ -264,33 +320,20 @@ int DevRcu2::Rcu2I2CRHRead(Ser::TceServiceData* pData, int32_t adc, int32_t unus
   uint32_t tmp=1;
 
 
-  //nRet |= rcu2->fpMsgbuffer->SingleI2CRead(0x40, &rawValue, 0);
-
-  ///// routine 
-  ///// start sampling 
   nRet |= rcu2->fpMsgbuffer->SingleI2CWrite(0x40, 0x40, 0xe5,1);
-  ////  getting data 
   sleep(1);
   rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x05, &tmp,1);
-  //printf("Rcu2I2CRHRead:: 0x%x\n", rawValue);
   newValue = 1.0*(((rawValue>>8) + (rawValue<<8)&0x00ffff));
-  //newValue = rawValue;  
   newValue = -6 + 125.0*newValue/65536.0;
 
   printf("Rcu2I2CRHumidity:: %f\n", newValue);  
 
-  /*
-  rawValue = rcu2->fpMsgbuffer->SingleI2CRead(0x40, 0x05, &tmp,2);
-  printf("aaaaaa 0x%x\n", rawValue);
-  newValue = rawValue;
-  newValue = -6 + 125.0*newValue/65536.0;
-  */
   if(nRet>=-1) pData->fVal=newValue;
   else pData->fVal=nRet;
   return nRet;
 }
 
-///pressure sensor 
+///pressure sensor mounted on the starterkit
 int DevRcu2::Rcu2I2CPreRead(Ser::TceServiceData* pData, int32_t adc, int32_t unused, void* parameter){
   if(!parameter) return -1;
   DevRcu2* rcu2=(DevRcu2*) parameter;
@@ -421,7 +464,11 @@ int DevRcu2::Rcu2I2CPreRead(Ser::TceServiceData* pData, int32_t adc, int32_t unu
   if(nRet>=0) pData->fVal=pressure;
   else pData->fVal=nRet;
   return nRet;
+
 }
+*/
+
+
 
 int DevRcu2::ArmorLocal(){
   //Will be executed at start of FeeServer
@@ -442,15 +489,18 @@ int DevRcu2::ArmorLocal(){
   fServices.push_back(new SerMbAddrS(name+"_SLC_STATUS_V2"   , FECResultREG         , 1, 0, fpMsgbuffer));
   
 
-  name=GetName()+"_TEMP";
-  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CTempRead, 0, 0, 0, this);
-  name=GetName()+"_RH";
-  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CRHRead, 0, 0, 0, this);
-  name=GetName()+"_Pressure";
-  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CPreRead, 0, 0, 0, this);
+  name=GetName()+"_TEMP1";
+  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CRead, 0, 0, 0, this);
+  name=GetName()+"_TEMP2";
+  Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CRead, 0, 1, 0, this);
+
+  //name=GetName()+"_Pressure";
+  //Ser::RegisterService(Ser::eDataTypeFloat, name.c_str(), 0.01, DevRcu2::Rcu2I2CPreRead, 0, 0, 0, this);
 
 
-
+  name=GetName()+"_RM_REG_CONTROL";
+  Ser::RegisterService(Ser::eDataTypeInt, name.c_str(), 0.5, DevRcu2::Rcu2RadMonRead, 0, 4, 0, this);
+  
   ////////////////////////////
 
   //std::vector<uint32_t> temp;
@@ -525,14 +575,22 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
     }
     break;
   case RCU_WRITE_AFL:
-    SetAfl(*(uint32_t*)pData);
-    iResult=4;
+    {
+      int write_data = 0x0;
+      if(sscanf(pBuffer, "0x%x", &write_data)>0){
+	SetAfl(write_data);
+	iResult=4;
+      }else{
+	CE_Warning("DevRcu2 RCU_WRITE_AFL cmd format is wrong (<fee>RCU2_WRITE_AFL 0x(hex)</fee>)!!\n");
+	iResult=0;
+      }
+    }
     break;
   case RCU_READ_AFL:
     {
       uint32_t rbsize=rb.size();
-      rb.resize(rbsize+parameter);
-      fpMsgbuffer->MultipleRead(V2_ALTROACL, parameter, &rb[rbsize]);
+      rb.resize(rbsize+1);
+      fpMsgbuffer->SingleRead(V2_FECActiveList_RO,&rb[rbsize]);
       iResult=0;
     }
     break;
@@ -552,6 +610,7 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
       case 2:  cmd=V2_CMDRESETRCU; break;
       default: cmd=V2_CMDRESET;    break;
       }
+      CE_Debug("RCU2 Reset is issued : cmd = 0x%x, parameter=%d\n", cmd, parameter);
       fpMsgbuffer->SingleWrite(cmd,0);
       sleep(1);
       iResult=0;
@@ -839,6 +898,30 @@ int DevRcu2::issue(uint32_t cmd, uint32_t parameter, const char* pData, int iDat
     CE_Debug("Rcu testing error state\n");
     SetErrorState();
     break;
+  case RCU_FEC_OFF:
+    CE_Debug("Rcu FEC %d is going to switch off\n", parameter);
+    if(parameter<0 || parameter>=32){
+      CE_Error("Fec number should be 0=<num<32\n", parameter);
+    }else{
+      fpMsgbuffer->SingleRead(V2_FECActiveList_RO,&data);    
+      if((data & (0x1)<<parameter)){ //on
+	data = data & ( ~( 0x00000000 | (0x1 << parameter)));
+	SetAfl(data);
+      }
+    }
+    break;
+  case RCU_FEC_ON:
+    CE_Debug("Rcu FEC %d is going to switch on\n", parameter);
+    if(parameter<0 || parameter>=32){
+      CE_Error("Fec number should be 0=<num<32\n", parameter);
+    }else{
+      fpMsgbuffer->SingleRead(V2_FECActiveList_RO,&data);    
+      if(!(data & (0x1)<<parameter)){ //off
+	data = data | (0x1 << parameter);
+	SetAfl(data);
+      }
+    }
+    break;
   default:
     CE_Warning("unrecognized command id (%#x)\n", cmd);
     iResult=-ENOSYS;
@@ -855,7 +938,9 @@ DevFecaccessRcu2::DevFecaccessRcu2(DevMsgbuffer* msgbuffer): DevFecaccess(msgbuf
 }
 int DevFecaccessRcu2::AccessFecReg(uint32_t &data, uint32_t fec, uint32_t reg, uint32_t rnw){
   //To be implemented...
-  return -2160;
+  //CE_Debug("DevFecaccessRcu2::AccessFecReg:: fec=%d, reg=0x%x, rnw=%d\n", fec, reg, rnw);
+
+  return -2100;
 }
 
 /******************************************************************************/
@@ -878,7 +963,7 @@ int DevMsgbufferRcu2::DriverUnload(){
   return 1;
 }
 int DevMsgbufferRcu2::DriverLoad(){
-  if(initRcuAccess(NULL, NULL)<0){
+  if(initRcuAccess(NULL, NULL, NULL)<0){
     CE_Error("initRcuAccess finished with error code\n");
   }
   return 1;
@@ -890,7 +975,6 @@ int DevMsgbufferRcu2::SingleWrite(uint32_t address, uint32_t data, uint32_t mode
 int DevMsgbufferRcu2::SingleRead(uint32_t address, uint32_t* pData, uint32_t mode){
   CE_Debug("access to the register 0x%x for reading\n", address);
   return Rcu2SingleRead(address, 1, pData);
-  //return rcuSingleRead(address, pData);
 }
 int DevMsgbufferRcu2::MultipleWrite(uint32_t address, uint32_t* pData, int iSize, int iDataSize, uint32_t mode){
   return Rcu2MultipleWrite(address, iSize, pData);
@@ -902,16 +986,35 @@ int DevMsgbufferRcu2::FlashErase(int startSec, int stopSec){
   return stopSec-startSec; 
 }
 
+int DevMsgbufferRcu2::SingleI2CReadReg(uint32_t address, uint32_t* pData, uint32_t mode){
+  int data = 0;
+  data = Rcu2SingleI2CReadReg(address, mode, pData);
+  CE_Debug("reading out from the i2c register 0x%x : data = 0x%x (0x%x)\n", address, data, pData);
+  return data;
+}
+
 int DevMsgbufferRcu2::SingleI2CRead(uint32_t base, uint32_t address, uint32_t* pData, uint32_t mode){
-  CE_Debug("access to the i2c register 0x%x for reading\n", address);
   int data = 0;
   data = Rcu2SingleI2CRead(base, address, mode, pData);
-  CE_Debug("reading out from the i2c register 0x%x : data = 0x%x (0x%x)\n", address, pData, data);
+  CE_Debug("reading out from the i2c register 0x%x : data = 0x%x (0x%x)\n", address, data, pData);
   return data;
 }
 
 int DevMsgbufferRcu2::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode){
   CE_Debug("access to the i2c register 0x%x for writing 0x%x\n", address, pData);
   return Rcu2SingleI2CWrite(base, address, 1, pData);
+}
+
+
+int DevMsgbufferRcu2::SingleRMRead(uint8_t base, uint8_t address, uint16_t* pData, uint8_t mode){
+  uint16_t data = 0;
+  data = Rcu2SingleRMRead(base, address, mode, pData);
+  CE_Debug("reading out from the Radmon register 0x%x : data = 0x%x (0x%x)\n", address, pData[0], data);
+  return data;
+}
+
+int DevMsgbufferRcu2::SingleRMWrite(uint8_t base, uint8_t address, uint16_t pData, uint8_t mode){
+  CE_Debug("access to the Radmon register 0x%x for writing 0x%x\n", address, pData);
+  return Rcu2SingleRMWrite(base, address, 1, pData);
 }
 

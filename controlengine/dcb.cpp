@@ -90,7 +90,7 @@ int DevMsgbufferDcb::DriverUnload(){
   return 1;
 }
 int DevMsgbufferDcb::DriverLoad(){
-  if(initRcuAccess(NULL, NULL)<0){
+  if(initRcuAccess(NULL, NULL, NULL)<0){
     CE_Error("initRcuAccess finished with error code\n");
    }
 //  if(initSmAccess(NULL)<0){
@@ -103,9 +103,19 @@ int DevMsgbufferDcb::DriverReload(){
   DriverLoad();
   return 1;
 }
+int DevMsgbufferDcb::SingleI2CReadReg(uint32_t address, uint32_t *pData, uint32_t mode){
+  return 1;
+}
 int DevMsgbufferDcb::SingleI2CRead(uint32_t base, uint32_t address, uint32_t *pData, uint32_t mode){
   return 1;
 }
 int DevMsgbufferDcb::SingleI2CWrite(uint32_t base, uint32_t address, uint32_t pData, uint32_t mode){
+  return 1;
+}
+
+int DevMsgbufferDcb::SingleRMRead(uint8_t base, uint8_t address, uint16_t *pData, uint8_t mode){
+  return 1;
+}
+int DevMsgbufferDcb::SingleRMWrite(uint8_t base, uint8_t address, uint16_t pData, uint8_t mode){
   return 1;
 }

@@ -365,7 +365,7 @@ typedef struct  dcscInitArguments_t TdcscInitArguments;
  *   -ENOENT : can not open device
  * @ingroup dcsc_msg_buffer_access
  */
-int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName);
+int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName[], const char* pDeviceRadmonName);
   
 /** 
  * Extended initialization.
@@ -379,7 +379,7 @@ int initRcuAccess(const char* pDeviceName, const char* pDeviceI2CName);
  *   -ENOENT : can not open device
  * @ingroup dcsc_msg_buffer_access
  */
-  int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName, TdcscInitArguments* pArg);
+int initRcuAccessExt(const char* pDeviceName, const char* pDeviceI2CName[], const char* pDeviceRadmonName, TdcscInitArguments* pArg);
 
 /** 
  * Close the device and release internal data structures.
@@ -440,6 +440,7 @@ int rcuSingleWrite(uint32_t address, uint32_t data);
 int Rcu2SingleWrite(uint32_t address, int size, uint32_t pData);
 int Rcu2MultipleWrite(uint32_t address, int size, uint32_t *pData);
 int Rcu2SingleI2CWrite(uint32_t base, uint32_t address, uint32_t mode, uint32_t pData);
+int Rcu2SingleRMWrite(uint8_t base, uint8_t address, uint8_t mode, uint16_t pData);
 
 
 /**
@@ -453,6 +454,8 @@ int rcuSingleRead(uint32_t address, uint32_t* pData);
 int Rcu2SingleRead(uint32_t address, int size, uint32_t* pData);
 int Rcu2MultipleRead(uint32_t address, int size, uint32_t* pData);
 int Rcu2SingleI2CRead(uint32_t base, uint32_t address, uint32_t mode, uint32_t* pData);
+int Rcu2SingleI2CReadReg(uint32_t address, uint32_t mode, uint32_t* pData);
+int Rcu2SingleRMRead(uint8_t base, uint8_t address, uint8_t mode, uint16_t* pData);
 
 /**
  * Write a number of 32bit words beginning at a location.
